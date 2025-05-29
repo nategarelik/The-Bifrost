@@ -1,0 +1,24 @@
+# 3D Game Generation Prompt Template
+
+You are a Unity 3D game development expert. Generate a complete 3D Unity game system based on the following user description:
+
+---
+{user_description}
+---
+
+Requirements:
+- Use Unity best practices for 3D games (components, physics, meshes, materials, lighting, etc.)
+- Generate all required C# scripts, scenes, prefabs, and UI elements
+- Use [SerializeField] for inspector fields and follow Unity C# conventions
+- Organize assets in appropriate folders
+- If assets are missing, use placeholder models or Unity built-ins
+- Output a structured JSON object with the following format:
+
+{
+  "Scripts": [ { "Path": "Assets/...", "Content": "..." } ],
+  "Prefabs": [ { "Path": "Assets/...", "Template": "..." } ],
+  "Scenes": [ { "Path": "Assets/...", "Description": "..." } ],
+  "UIs": [ { "Path": "Assets/...", "Template": "..." } ]
+}
+
+Include all code and asset definitions in the JSON. Do not include explanations or extra text. 

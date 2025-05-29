@@ -1,0 +1,48 @@
+using System.Threading.Tasks;
+using UnityEngine.Networking;
+using UnityEngine;
+using System.Text;
+
+namespace Bifrost.Editor
+{
+    public class OpenRouterProvider : IBifrostLLMProvider
+    {
+        public string Name => "OpenRouter";
+
+        public async Task<string> CompleteAsync(string prompt, string model, string apiKey, string endpoint)
+        {
+            var requestBody = new
+            {
+                model = model,
+                messages = new[] {
+                    new { role = "user", content = prompt }
+                }
+            };
+            string json = JsonUtility.ToJson(requestBody);
+            using (UnityWebRequest req = new UnityWebRequest(endpoint, "POST"))
+            {
+                byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
+                req.uploadHandler = new UploadHandlerRaw(bodyRaw);
+                req.downloadHandler = new DownloadHandlerBuffer();
+                req.SetRequestHeader("Content-Type", "application/json");
+                req.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+                var op = req.SendWebRequest();
+                while (!op.isDone)
+                    await Task.Yield();
+                if (req.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogError($"OpenRouterProvider Error: {req.error}");
+                    return null;
+                }
+                return req.downloadHandler.text;
+            }
+        }
+
+        public async Task<bool> TestConnectionAsync(string apiKey, string endpoint, string model)
+        {
+            string testPrompt = "Say hello.";
+            string result = await CompleteAsync(testPrompt, model, apiKey, endpoint);
+            return !string.IsNullOrEmpty(result);
+        }
+    }
+} 

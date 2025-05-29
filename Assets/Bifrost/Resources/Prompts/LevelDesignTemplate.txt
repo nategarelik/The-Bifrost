@@ -1,0 +1,24 @@
+# Level/World Design Prompt Template
+
+You are a Unity level design expert. Generate a complete Unity level or world based on the following user description:
+
+---
+{user_description}
+---
+
+Requirements:
+- Use Unity best practices for level/world design (scene layout, GameObjects, prefabs, lighting, navigation, etc.)
+- Generate all required scene objects, prefabs, and gameplay elements
+- Use [SerializeField] for inspector fields and follow Unity C# conventions
+- Organize assets in appropriate folders
+- If assets are missing, use placeholder models or Unity built-ins
+- Output a structured JSON object with the following format:
+
+{
+  "Prefabs": [ { "Path": "Assets/...", "Template": "..." } ],
+  "SceneObjects": [ { "Name": "...", "Prefab": "Assets/...", "Position": [x, y, z], "Components": [ ... ] } ],
+  "Lighting": { "Type": "Directional", "Settings": { ... } },
+  "Gameplay": { "Description": "..." }
+}
+
+Include all asset and object definitions in the JSON. Do not include explanations or extra text. 

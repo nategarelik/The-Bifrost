@@ -26,7 +26,7 @@ namespace Bifrost.Editor.UI
 
         // Event fired when user sends a message
         public event Action<string> OnMessageSent;
-        
+
         // Event fired when user requests to clear chat
         public event Action OnClearChat;
 
@@ -75,11 +75,11 @@ namespace Bifrost.Editor.UI
         private void DrawToolbar(Rect position)
         {
             GUILayout.BeginHorizontal(EditorStyles.toolbar);
-            
-            if (GUILayout.Button("Clear Chat", EditorStyles.toolbarButton))
+
+            if (GUILayout.Button(new GUIContent("Clear Chat", "Clear the chat history"), EditorStyles.toolbarButton))
             {
-                if (EditorUtility.DisplayDialog("Clear Chat", 
-                    "Are you sure you want to clear the chat history?", 
+                if (EditorUtility.DisplayDialog("Clear Chat",
+                    "Are you sure you want to clear the chat history?",
                     "Yes", "No"))
                 {
                     chatHistory.Clear();
@@ -89,13 +89,13 @@ namespace Bifrost.Editor.UI
             }
 
             GUILayout.FlexibleSpace();
-            
+
             // Processing indicator
             if (isProcessing)
             {
-                GUILayout.Label("Processing...", EditorStyles.toolbarButton);
+                GUILayout.Label(new GUIContent("Processing...", "The AI is working on your request."), EditorStyles.toolbarButton);
             }
-            
+
             GUILayout.EndHorizontal();
         }
 
@@ -104,8 +104,8 @@ namespace Bifrost.Editor.UI
             float chatAreaHeight = position.height - INPUT_HEIGHT - EditorStyles.toolbar.fixedHeight;
             Rect chatArea = new Rect(0, EditorStyles.toolbar.fixedHeight, position.width, chatAreaHeight);
 
-            scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, true, 
-                GUILayout.Width(chatArea.width), 
+            scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, true,
+                GUILayout.Width(chatArea.width),
                 GUILayout.Height(chatArea.height));
 
             foreach (var message in chatHistory)
@@ -125,22 +125,22 @@ namespace Bifrost.Editor.UI
         private void DrawMessage(ChatMessage message)
         {
             GUIStyle style = new GUIStyle(messageStyle);
-            style.normal.textColor = message.IsUser ? 
-                EditorGUIUtility.isProSkin ? Color.white : Color.black : 
+            style.normal.textColor = message.IsUser ?
+                EditorGUIUtility.isProSkin ? Color.white : Color.black :
                 EditorGUIUtility.isProSkin ? Color.cyan : Color.blue;
 
             EditorGUILayout.BeginHorizontal();
-            
+
             if (message.IsUser)
                 GUILayout.Space(SCROLL_BAR_WIDTH + MESSAGE_PADDING);
-                
-            EditorGUILayout.LabelField($"<b>{(message.IsUser ? "You" : "Bifrost")}</b> ({message.Timestamp:HH:mm})\n{message.Content}", 
-                style, 
+
+            EditorGUILayout.LabelField($"<b>{(message.IsUser ? "You" : "Bifrost")}</b> ({message.Timestamp:HH:mm})\n{message.Content}",
+                style,
                 GUILayout.MaxWidth(position.width - SCROLL_BAR_WIDTH - MESSAGE_PADDING * 2));
-                
+
             if (!message.IsUser)
                 GUILayout.Space(SCROLL_BAR_WIDTH + MESSAGE_PADDING);
-                
+
             EditorGUILayout.EndHorizontal();
         }
 
@@ -148,30 +148,30 @@ namespace Bifrost.Editor.UI
         {
             Rect inputArea = new Rect(0, position.height - INPUT_HEIGHT, position.width, INPUT_HEIGHT);
             GUILayout.BeginArea(inputArea);
-            
+
             EditorGUILayout.BeginHorizontal();
-            
+
             // Multi-line input field
             GUI.SetNextControlName("ChatInput");
-            currentInput = EditorGUILayout.TextArea(currentInput, inputStyle, 
+            currentInput = EditorGUILayout.TextArea(currentInput, inputStyle,
                 GUILayout.Height(INPUT_HEIGHT - EditorGUIUtility.standardVerticalSpacing * 2));
 
             // Send button
             GUI.enabled = !string.IsNullOrWhiteSpace(currentInput) && !isProcessing;
-            if (GUILayout.Button("Send", GUILayout.Width(SEND_BUTTON_WIDTH), 
+            if (GUILayout.Button("Send", GUILayout.Width(SEND_BUTTON_WIDTH),
                 GUILayout.Height(INPUT_HEIGHT - EditorGUIUtility.standardVerticalSpacing * 2)))
             {
                 SendMessage();
             }
             GUI.enabled = true;
-            
+
             EditorGUILayout.EndHorizontal();
             GUILayout.EndArea();
 
             // Handle Enter key to send message (Shift+Enter for new line)
-            if (Event.current.type == EventType.KeyDown && 
-                Event.current.keyCode == KeyCode.Return && 
-                !Event.current.shift && 
+            if (Event.current.type == EventType.KeyDown &&
+                Event.current.keyCode == KeyCode.Return &&
+                !Event.current.shift &&
                 GUI.GetNameOfFocusedControl() == "ChatInput")
             {
                 Event.current.Use();
@@ -185,11 +185,11 @@ namespace Bifrost.Editor.UI
                 return;
 
             string messageContent = currentInput.Trim();
-            AddMessage(new ChatMessage 
-            { 
-                Content = messageContent, 
-                IsUser = true, 
-                Timestamp = DateTime.Now 
+            AddMessage(new ChatMessage
+            {
+                Content = messageContent,
+                IsUser = true,
+                Timestamp = DateTime.Now
             });
 
             OnMessageSent?.Invoke(messageContent);
@@ -199,11 +199,11 @@ namespace Bifrost.Editor.UI
 
         public void AddResponse(string response)
         {
-            AddMessage(new ChatMessage 
-            { 
-                Content = response, 
-                IsUser = false, 
-                Timestamp = DateTime.Now 
+            AddMessage(new ChatMessage
+            {
+                Content = response,
+                IsUser = false,
+                Timestamp = DateTime.Now
             });
         }
 
@@ -220,6 +220,11 @@ namespace Bifrost.Editor.UI
                 chatHistory.RemoveAt(0);
             }
         }
+
+        public void SetInput(string text)
+        {
+            currentInput = text;
+        }
     }
 
     /// <summary>
@@ -231,4 +236,4 @@ namespace Bifrost.Editor.UI
         public bool IsUser { get; set; }
         public DateTime Timestamp { get; set; }
     }
-} 
+}

@@ -63,5 +63,7 @@ namespace Bifrost.Editor.UI
             EditorGUILayout.EndVertical();
             EditorGUILayout.EndHorizontal();
         }
+
+        public string SelectedTemplateContent => selectedContent;
     }
-} 
+}

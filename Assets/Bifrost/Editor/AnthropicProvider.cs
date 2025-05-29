@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using UnityEngine.Networking;
 using UnityEngine;
 using System.Text;
+using Bifrost.Editor;
 
 namespace Bifrost.Editor
 {
@@ -9,13 +10,13 @@ namespace Bifrost.Editor
     {
         public string Name => "Anthropic";
 
-        public async Task<string> CompleteAsync(string prompt, string model, string apiKey, string endpoint)
+        public async Task<string> CompleteAsync(string prompt, string model, string apiKey, string endpoint, LLMRequestOptions options)
         {
             var requestBody = new
             {
                 model = model,
-                max_tokens = 1024,
-                temperature = 0.7f,
+                max_tokens = options?.maxTokens ?? 1024,
+                temperature = options?.temperature ?? 0.7f,
                 messages = new[] {
                     new { role = "user", content = prompt }
                 }
@@ -28,6 +29,14 @@ namespace Bifrost.Editor
                 req.downloadHandler = new DownloadHandlerBuffer();
                 req.SetRequestHeader("Content-Type", "application/json");
                 req.SetRequestHeader("x-api-key", apiKey);
+                if (options != null && options.customHeaders != null)
+                {
+                    foreach (var header in options.customHeaders)
+                    {
+                        if (!string.IsNullOrEmpty(header.key))
+                            req.SetRequestHeader(header.key, header.value);
+                    }
+                }
                 var op = req.SendWebRequest();
                 while (!op.isDone)
                     await Task.Yield();
@@ -47,4 +56,4 @@ namespace Bifrost.Editor
             return !string.IsNullOrEmpty(result);
         }
     }
-} 
+}

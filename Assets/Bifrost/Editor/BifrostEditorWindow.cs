@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Threading.Tasks;
 using Bifrost.Editor.UI;
+using Bifrost.Editor.AI;
 
 namespace Bifrost.Editor
 {
@@ -26,7 +27,7 @@ namespace Bifrost.Editor
         // State
         private string currentMode = "Code";
         private bool awaitingApproval = false;
-        private GameSystemPlan pendingPlan = null;
+        private LLMGameSystemPlan pendingPlan = null;
         private string lastUserMessage = null;
         private string errorMessage = null;
 
@@ -176,7 +177,7 @@ namespace Bifrost.Editor
                     // General game system generation
                     chatUI.AddResponse("Analyzing request and planning actions...");
                     var plan = await systemGenerator.PlanGameSystemAsync(message);
-                    if (plan != null && (plan.Scripts.Count > 0 || plan.Prefabs.Count > 0 || plan.UIs.Count > 0))
+                    if (plan != null && plan.steps != null && plan.steps.Length > 0)
                     {
                         pendingPlan = plan;
                         awaitingApproval = true;
@@ -228,4 +229,4 @@ namespace Bifrost.Editor
             }
         }
     }
-} 
+}

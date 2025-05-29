@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using UnityEngine.Networking;
 using UnityEngine;
 using System.Text;
+using Bifrost.Editor;
 
 namespace Bifrost.Editor
 {
@@ -9,7 +10,7 @@ namespace Bifrost.Editor
     {
         public string Name => "Gemini";
 
-        public async Task<string> CompleteAsync(string prompt, string model, string apiKey, string endpoint)
+        public async Task<string> CompleteAsync(string prompt, string model, string apiKey, string endpoint, LLMRequestOptions options)
         {
             var requestBody = new
             {
@@ -17,8 +18,8 @@ namespace Bifrost.Editor
                 messages = new[] {
                     new { role = "user", content = prompt }
                 },
-                max_tokens = 1024,
-                temperature = 0.7f
+                max_tokens = options?.maxTokens ?? 1024,
+                temperature = options?.temperature ?? 0.7f
             };
             string json = JsonUtility.ToJson(requestBody);
             using (UnityWebRequest req = new UnityWebRequest(endpoint, "POST"))
@@ -28,6 +29,14 @@ namespace Bifrost.Editor
                 req.downloadHandler = new DownloadHandlerBuffer();
                 req.SetRequestHeader("Content-Type", "application/json");
                 req.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+                if (options != null && options.customHeaders != null)
+                {
+                    foreach (var header in options.customHeaders)
+                    {
+                        if (!string.IsNullOrEmpty(header.key))
+                            req.SetRequestHeader(header.key, header.value);
+                    }
+                }
                 var op = req.SendWebRequest();
                 while (!op.isDone)
                     await Task.Yield();
@@ -47,4 +56,4 @@ namespace Bifrost.Editor
             return !string.IsNullOrEmpty(result);
         }
     }
-} 
+}

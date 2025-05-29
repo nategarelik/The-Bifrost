@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using System;
+#if PROBUILDER_API_EXISTS
+using UnityEngine.ProBuilder;
+#endif
 
 namespace Bifrost.Editor
 {
@@ -139,10 +142,47 @@ namespace Bifrost.Editor
             }
         }
 
-        // ProBuilder integration stub (expand if ProBuilder is present)
+        // ProBuilder integration: create a shape if ProBuilder is present
         public void CreateProBuilderShape(string shapeType, Vector3 position)
         {
-            Debug.Log("UnityProjectManager: ProBuilder integration not implemented. Add ProBuilder API calls here if package is present.");
+#if PROBUILDER_API_EXISTS
+            // Example: create a cube
+            if (shapeType.ToLower() == "cube")
+            {
+                var pb = ProBuilderMesh.CreateShape(ShapeType.Cube);
+                pb.transform.position = position;
+                Undo.RegisterCreatedObjectUndo(pb.gameObject, "Create ProBuilder Cube");
+            }
+            else
+            {
+                Debug.LogWarning($"UnityProjectManager: Shape type '{shapeType}' not supported by ProBuilder stub.");
+            }
+#else
+            Debug.LogWarning("UnityProjectManager: ProBuilder integration not available. Please install ProBuilder package.");
+#endif
+        }
+
+        // Utility: Duplicate a prefab
+        public string DuplicatePrefab(string sourcePath, string destPath)
+        {
+            try
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);
+                if (prefab == null)
+                {
+                    Debug.LogError($"UnityProjectManager: Source prefab not found at {sourcePath}");
+                    return null;
+                }
+                var newPrefab = Object.Instantiate(prefab);
+                var resultPath = CreatePrefab(destPath, newPrefab);
+                Object.DestroyImmediate(newPrefab);
+                return resultPath;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"UnityProjectManager: Failed to duplicate prefab: {ex.Message}");
+                return null;
+            }
         }
     }
-} 
+}

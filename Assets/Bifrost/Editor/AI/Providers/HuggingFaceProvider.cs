@@ -2,27 +2,24 @@ using System.Threading.Tasks;
 using UnityEngine.Networking;
 using UnityEngine;
 using System.Text;
-using Bifrost.Editor;
 
-namespace Bifrost.Editor
+namespace Bifrost.Editor.AI.Providers
 {
-    public class OpenAIProvider : IBifrostLLMProvider
+    public class HuggingFaceProvider : IBifrostLLMProvider
     {
-        public string Name => "OpenAI";
+        public string Name => "HuggingFace";
 
         public async Task<string> CompleteAsync(string prompt, string model, string apiKey, string endpoint, LLMRequestOptions options)
         {
+            // TODO: Add support for custom headers and advanced settings
             var requestBody = new
             {
-                model = model,
-                messages = new[] {
-                    new { role = "user", content = prompt }
-                },
-                max_tokens = options?.maxTokens ?? 1024,
-                temperature = options?.temperature ?? 0.7f,
-                top_p = options?.topP ?? 1.0f,
-                frequency_penalty = options?.frequencyPenalty ?? 0.0f,
-                presence_penalty = options?.presencePenalty ?? 0.0f
+                inputs = prompt,
+                parameters = new
+                {
+                    max_new_tokens = options?.maxTokens ?? 1024,
+                    temperature = options?.temperature ?? 0.7f
+                }
             };
             string json = JsonUtility.ToJson(requestBody);
             using (UnityWebRequest req = new UnityWebRequest(endpoint, "POST"))
@@ -45,7 +42,7 @@ namespace Bifrost.Editor
                     await Task.Yield();
                 if (req.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogError($"OpenAIProvider Error: {req.error}");
+                    Debug.LogError($"HuggingFaceProvider Error: {req.error}");
                     return null;
                 }
                 return req.downloadHandler.text;

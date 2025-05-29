@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Bifrost.Editor.AI;
 
 namespace Bifrost.Editor
 {
@@ -22,9 +23,9 @@ namespace Bifrost.Editor
         /// <summary>
         /// Generates a game system from a description. Returns a summary of planned changes for approval.
         /// </summary>
-        public async Task<GameSystemPlan> PlanGameSystemAsync(string description)
+        public async Task<LLMGameSystemPlan> PlanGameSystemAsync(string description)
         {
-            // Ask the AI agent to plan the system (stubbed for now)
+            // Ask the AI agent to plan the system (now uses schema validation and fallback)
             var plan = await bifrostAgent.PlanGameSystemAsync(description);
             return plan;
         }
@@ -94,4 +95,4 @@ namespace Bifrost.Editor
         public string Path;
         public string Template;
     }
-} 
+}

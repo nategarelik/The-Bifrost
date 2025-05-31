@@ -236,7 +236,7 @@ namespace Bifrost.Editor
                     }
                     else
                     {
-                        chatUI.AddResponse(llmPlan?.error ?? "AI could not generate a valid plan.");
+                        chatUI.AddResponse("AI could not generate a valid plan.");
                     }
                 }
             }

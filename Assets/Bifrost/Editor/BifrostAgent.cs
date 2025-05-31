@@ -141,23 +141,23 @@ namespace Bifrost.Editor
         }
 
         // Example: PlanGameSystemAsync (with LLM response parsing)
-        public async Task<LLMGameSystemPlan> PlanGameSystemAsync(string description)
+        public async Task<(LLMGameSystemPlan plan, string rawResponse)> PlanGameSystemAsync(string description)
         {
             string response = await CompleteAsync(description);
             if (string.IsNullOrEmpty(response))
             {
                 Debug.LogError("BifrostAgent: LLM response was empty or null.");
-                return LLMGameSystemPlan.Fallback(description);
+                return (LLMGameSystemPlan.Fallback(description), response);
             }
             if (LLMGameSystemPlan.TryParse(response, out var plan))
             {
-                return plan;
+                return (plan, response);
             }
             else
             {
                 Debug.LogError("Raw LLM response: " + (response ?? "<null>"));
                 Debug.LogError("BifrostAgent: Failed to parse LLM response into LLMGameSystemPlan. Using fallback plan.");
-                return LLMGameSystemPlan.Fallback(description);
+                return (LLMGameSystemPlan.Fallback(description), response);
             }
         }
     }

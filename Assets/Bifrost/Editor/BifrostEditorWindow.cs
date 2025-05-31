@@ -236,7 +236,8 @@ namespace Bifrost.Editor
                 {
                     chatUI.AddResponse("Planning actions...");
                     lastLLMRequest = message;
-                    var llmPlan = await systemGenerator.PlanGameSystemAsync(message);
+                    var (llmPlan, rawResponse) = await systemGenerator.PlanGameSystemAsync(message);
+                    lastLLMResponse = rawResponse;
                     var plan = ConvertToGameSystemPlan(llmPlan);
                     if (plan != null && (plan.Scripts.Any() || plan.Prefabs.Any() || plan.UIs.Any()))
                     {

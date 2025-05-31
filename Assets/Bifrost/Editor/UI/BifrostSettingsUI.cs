@@ -286,6 +286,20 @@ namespace Bifrost.Editor.UI
             var settings = AssetDatabase.LoadAssetAtPath<BifrostSettings>(SETTINGS_PATH);
             if (settings == null)
             {
+                // Ensure parent directory exists
+                string dir = System.IO.Path.GetDirectoryName(SETTINGS_PATH);
+                if (!AssetDatabase.IsValidFolder(dir))
+                {
+                    string[] parts = dir.Split('/');
+                    string current = parts[0];
+                    for (int i = 1; i < parts.Length; i++)
+                    {
+                        string next = current + "/" + parts[i];
+                        if (!AssetDatabase.IsValidFolder(next))
+                            AssetDatabase.CreateFolder(current, parts[i]);
+                        current = next;
+                    }
+                }
                 settings = ScriptableObject.CreateInstance<BifrostSettings>();
                 AssetDatabase.CreateAsset(settings, SETTINGS_PATH);
                 AssetDatabase.SaveAssets();

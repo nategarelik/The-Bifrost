@@ -69,7 +69,8 @@ namespace Bifrost.Editor.UI
     {
         private const string LIBRARY_PATH = "Assets/Bifrost/Resources/BifrostModeLibrary.asset";
 
-        [SerializeField] private List<BifrostMode> modes = new List<BifrostMode>
+        [SerializeField]
+        private List<BifrostMode> modes = new List<BifrostMode>
         {
             new BifrostMode { name = "Code", description = "Code generation and editing mode.", promptTemplate = "Prompts/CodePrompt" },
             new BifrostMode { name = "Architect", description = "System and architecture design mode.", promptTemplate = "Prompts/ArchitectPrompt" },
@@ -84,6 +85,20 @@ namespace Bifrost.Editor.UI
             var library = AssetDatabase.LoadAssetAtPath<BifrostModeLibrary>(LIBRARY_PATH);
             if (library == null)
             {
+                // Ensure parent directory exists
+                string dir = System.IO.Path.GetDirectoryName(LIBRARY_PATH);
+                if (!AssetDatabase.IsValidFolder(dir))
+                {
+                    string[] parts = dir.Split('/');
+                    string current = parts[0];
+                    for (int i = 1; i < parts.Length; i++)
+                    {
+                        string next = current + "/" + parts[i];
+                        if (!AssetDatabase.IsValidFolder(next))
+                            AssetDatabase.CreateFolder(current, parts[i]);
+                        current = next;
+                    }
+                }
                 library = ScriptableObject.CreateInstance<BifrostModeLibrary>();
                 AssetDatabase.CreateAsset(library, LIBRARY_PATH);
                 AssetDatabase.SaveAssets();
@@ -99,4 +114,4 @@ namespace Bifrost.Editor.UI
         public string description;
         public string promptTemplate; // Resource path to prompt template
     }
-} 
+}

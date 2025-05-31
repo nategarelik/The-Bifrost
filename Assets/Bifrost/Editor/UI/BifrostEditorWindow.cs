@@ -26,7 +26,7 @@ public class BifrostEditorWindow : EditorWindow
         GetWindow<BifrostEditorWindow>("Bifrost Editor");
     }
 
-    private async void OnEnable()
+    private void OnEnable()
     {
         chatUI = new BifrostChatUI();
         settingsUI = new BifrostSettingsUI();
@@ -42,6 +42,12 @@ public class BifrostEditorWindow : EditorWindow
 
     private void OnGUI()
     {
+        // Null checks and re-initialization
+        if (chatUI == null) chatUI = new BifrostChatUI();
+        if (settingsUI == null) settingsUI = new BifrostSettingsUI();
+        if (modeEditor == null) modeEditor = new BifrostModeEditor();
+        if (promptLibraryUI == null && promptManager != null) promptLibraryUI = new BifrostPromptLibraryUI(promptManager);
+
         DrawTabs();
         EditorGUILayout.Space();
 
@@ -59,16 +65,16 @@ public class BifrostEditorWindow : EditorWindow
         switch (currentTab)
         {
             case Tab.Chat:
-                DrawChatTab();
+                if (chatUI != null) DrawChatTab();
                 break;
             case Tab.Settings:
-                settingsUI.Draw();
+                if (settingsUI != null) settingsUI.Draw();
                 break;
             case Tab.Modes:
-                modeEditor.Draw();
+                if (modeEditor != null) modeEditor.Draw();
                 break;
             case (Tab)3:
-                DrawPromptLibraryTab();
+                if (promptLibraryUI != null) DrawPromptLibraryTab();
                 break;
         }
     }
@@ -123,6 +129,14 @@ public class BifrostEditorWindow : EditorWindow
 
     private void DrawChatTab()
     {
-        chatUI.Draw(new Rect(0, 0, position.width, position.height));
+        try
+        {
+            chatUI.Draw(new Rect(0, 0, position.width, position.height));
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"BifrostEditorWindow.DrawChatTab Exception: {ex.Message}\n{ex.StackTrace}");
+            errorMessage = $"Error in chat UI: {ex.Message}";
+        }
     }
 }

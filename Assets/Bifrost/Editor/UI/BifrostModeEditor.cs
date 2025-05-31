@@ -82,23 +82,10 @@ namespace Bifrost.Editor.UI
 
         public static BifrostModeLibrary GetOrCreateLibrary()
         {
+            Bifrost.Editor.UI.BifrostSettingsUI.EnsureBifrostResourcesFolder();
             var library = AssetDatabase.LoadAssetAtPath<BifrostModeLibrary>(LIBRARY_PATH);
             if (library == null)
             {
-                // Ensure parent directory exists
-                string dir = System.IO.Path.GetDirectoryName(LIBRARY_PATH);
-                if (!AssetDatabase.IsValidFolder(dir))
-                {
-                    string[] parts = dir.Split('/');
-                    string current = parts[0];
-                    for (int i = 1; i < parts.Length; i++)
-                    {
-                        string next = current + "/" + parts[i];
-                        if (!AssetDatabase.IsValidFolder(next))
-                            AssetDatabase.CreateFolder(current, parts[i]);
-                        current = next;
-                    }
-                }
                 library = ScriptableObject.CreateInstance<BifrostModeLibrary>();
                 AssetDatabase.CreateAsset(library, LIBRARY_PATH);
                 AssetDatabase.SaveAssets();

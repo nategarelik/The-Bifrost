@@ -281,25 +281,25 @@ namespace Bifrost.Editor.UI
         public float PresencePenalty => presencePenalty;
         public List<Bifrost.Editor.UI.BifrostSettingsUI.CustomHeader> CustomHeaders => customHeaders;
 
+        public static void EnsureBifrostResourcesFolder()
+        {
+            string[] parts = { "Assets", "Bifrost", "Resources" };
+            string current = parts[0];
+            for (int i = 1; i < parts.Length; i++)
+            {
+                string next = current + "/" + parts[i];
+                if (!AssetDatabase.IsValidFolder(next))
+                    AssetDatabase.CreateFolder(current, parts[i]);
+                current = next;
+            }
+        }
+
         public static BifrostSettings GetOrCreateSettings()
         {
+            EnsureBifrostResourcesFolder();
             var settings = AssetDatabase.LoadAssetAtPath<BifrostSettings>(SETTINGS_PATH);
             if (settings == null)
             {
-                // Ensure parent directory exists
-                string dir = System.IO.Path.GetDirectoryName(SETTINGS_PATH);
-                if (!AssetDatabase.IsValidFolder(dir))
-                {
-                    string[] parts = dir.Split('/');
-                    string current = parts[0];
-                    for (int i = 1; i < parts.Length; i++)
-                    {
-                        string next = current + "/" + parts[i];
-                        if (!AssetDatabase.IsValidFolder(next))
-                            AssetDatabase.CreateFolder(current, parts[i]);
-                        current = next;
-                    }
-                }
                 settings = ScriptableObject.CreateInstance<BifrostSettings>();
                 AssetDatabase.CreateAsset(settings, SETTINGS_PATH);
                 AssetDatabase.SaveAssets();

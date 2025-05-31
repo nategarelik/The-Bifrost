@@ -28,6 +28,7 @@ public class BifrostEditorWindow : EditorWindow
 
     private void OnEnable()
     {
+        Bifrost.Editor.UI.BifrostSettingsUI.EnsureBifrostResourcesFolder();
         chatUI = new BifrostChatUI();
         settingsUI = new BifrostSettingsUI();
         modeEditor = new BifrostModeEditor();

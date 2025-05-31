@@ -23,6 +23,7 @@ namespace Bifrost.Editor.UI
         private GUIStyle messageStyle;
         private GUIStyle inputStyle;
         private bool isProcessing;
+        private bool stylesInitialized = false;
 
         // Event fired when user sends a message
         public event Action<string> OnMessageSent;
@@ -33,13 +34,16 @@ namespace Bifrost.Editor.UI
         public BifrostChatUI()
         {
             chatHistory = new List<ChatMessage>();
-            InitializeStyles();
             AddWelcomeMessage();
         }
 
         private void InitializeStyles()
         {
-            messageStyle = new GUIStyle(EditorStyles.helpBox)
+            if (stylesInitialized) return;
+            stylesInitialized = true;
+
+            var helpBox = EditorStyles.helpBox ?? new GUIStyle(GUI.skin.box);
+            messageStyle = new GUIStyle(helpBox)
             {
                 richText = true,
                 wordWrap = true,
@@ -47,7 +51,8 @@ namespace Bifrost.Editor.UI
                 margin = new RectOffset(5, 5, 5, 5)
             };
 
-            inputStyle = new GUIStyle(EditorStyles.textArea)
+            var textArea = EditorStyles.textArea ?? new GUIStyle(GUI.skin.textArea);
+            inputStyle = new GUIStyle(textArea)
             {
                 wordWrap = true,
                 richText = true,
@@ -67,6 +72,7 @@ namespace Bifrost.Editor.UI
 
         public void Draw(Rect position)
         {
+            InitializeStyles();
             DrawToolbar(position);
             DrawChatHistory(position);
             DrawInputArea(position);

@@ -45,7 +45,15 @@ namespace Bifrost.Editor
                     await Task.Yield();
                 if (req.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogError($"OpenRouterProvider Error: {req.error}");
+                    Debug.LogError($"OpenRouterProvider Error: {req.error} - Status Code: {req.responseCode}");
+                    if (req.downloadHandler != null && !string.IsNullOrEmpty(req.downloadHandler.text))
+                    {
+                        Debug.LogError($"OpenRouterProvider - Server Response Body: {req.downloadHandler.text}");
+                    }
+                    else
+                    {
+                        Debug.LogError("OpenRouterProvider - No response body from server.");
+                    }
                     return null;
                 }
                 return req.downloadHandler.text;

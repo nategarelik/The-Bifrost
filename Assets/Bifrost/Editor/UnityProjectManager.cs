@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using System;
+using System.IO;
 #if PROBUILDER_API_EXISTS
 using UnityEngine.ProBuilder;
 #endif
@@ -10,13 +11,53 @@ namespace Bifrost.Editor
 {
     public class UnityProjectManager
     {
+        // Ensure directories exist in path
+        public bool EnsureDirectoryExists(string path)
+        {
+            try
+            {
+                string directory = Path.GetDirectoryName(path);
+                if (string.IsNullOrEmpty(directory))
+                    return false;
+
+                // Handle both absolute and relative paths
+                if (Path.IsPathRooted(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+                else
+                {
+                    // For Unity asset paths (e.g. "Assets/Folder/SubFolder")
+                    string[] pathParts = directory.Split('/');
+                    string currentPath = pathParts[0]; // Usually "Assets"
+
+                    for (int i = 1; i < pathParts.Length; i++)
+                    {
+                        string nextPath = currentPath + "/" + pathParts[i];
+                        if (!AssetDatabase.IsValidFolder(nextPath))
+                        {
+                            string parentFolder = currentPath;
+                            string newFolder = pathParts[i];
+                            AssetDatabase.CreateFolder(parentFolder, newFolder);
+                        }
+                        currentPath = nextPath;
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"UnityProjectManager: Failed to create directory structure: {ex.Message}");
+                return false;
+            }
+        }
+
         // Create a new scene and save it
         public string CreateScene(string sceneName, string folder = "Assets/Bifrost/Runtime/BifrostGameSystems/Scenes")
         {
             try
             {
-                if (!AssetDatabase.IsValidFolder(folder))
-                    AssetDatabase.CreateFolder("Assets/Bifrost/Runtime/BifrostGameSystems", "Scenes");
+                EnsureDirectoryExists(folder + "/placeholder.tmp");
                 var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
                 string path = $"{folder}/{sceneName}.unity";
                 EditorSceneManager.SaveScene(scene, path);
@@ -105,9 +146,12 @@ namespace Bifrost.Editor
         {
             try
             {
-                string folder = System.IO.Path.GetDirectoryName(prefabPath);
-                if (!AssetDatabase.IsValidFolder(folder))
-                    AssetDatabase.CreateFolder(System.IO.Path.GetDirectoryName(folder), System.IO.Path.GetFileName(folder));
+                if (!EnsureDirectoryExists(prefabPath))
+                {
+                    Debug.LogError($"UnityProjectManager: Failed to create directory structure for prefab: {prefabPath}");
+                    return false;
+                }
+
                 var prefab = PrefabUtility.SaveAsPrefabAsset(go, prefabPath);
                 AssetDatabase.Refresh();
                 return prefab != null;
@@ -173,6 +217,13 @@ namespace Bifrost.Editor
                     Debug.LogError($"UnityProjectManager: Source prefab not found at {sourcePath}");
                     return null;
                 }
+
+                if (!EnsureDirectoryExists(destPath))
+                {
+                    Debug.LogError($"UnityProjectManager: Failed to create directory structure for duplicated prefab: {destPath}");
+                    return null;
+                }
+
                 var newPrefab = UnityEngine.Object.Instantiate(prefab);
                 var resultPath = CreatePrefab(destPath, newPrefab) ? destPath : null;
                 UnityEngine.Object.DestroyImmediate(newPrefab);
@@ -189,9 +240,12 @@ namespace Bifrost.Editor
         {
             try
             {
-                string directory = System.IO.Path.GetDirectoryName(path);
-                if (!System.IO.Directory.Exists(directory))
-                    System.IO.Directory.CreateDirectory(directory);
+                if (!EnsureDirectoryExists(path))
+                {
+                    Debug.LogError($"UnityProjectManager: Failed to create directory structure for script: {path}");
+                    return false;
+                }
+
                 System.IO.File.WriteAllText(path, content);
                 AssetDatabase.ImportAsset(path);
                 return true;
@@ -207,9 +261,12 @@ namespace Bifrost.Editor
         {
             try
             {
-                string directory = System.IO.Path.GetDirectoryName(path);
-                if (!System.IO.Directory.Exists(directory))
-                    System.IO.Directory.CreateDirectory(directory);
+                if (!EnsureDirectoryExists(path))
+                {
+                    Debug.LogError($"UnityProjectManager: Failed to create directory structure for UI: {path}");
+                    return false;
+                }
+
                 System.IO.File.WriteAllText(path, template ?? "");
                 AssetDatabase.ImportAsset(path);
                 return true;

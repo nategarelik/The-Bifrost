@@ -5,6 +5,7 @@ using System.Text;
 using Bifrost.Editor;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Bifrost.Editor
 {
@@ -16,6 +17,18 @@ namespace Bifrost.Editor
 
         [JsonProperty("content")]
         public string Content { get; set; }
+    }
+
+    public class OpenRouterChoice
+    {
+        [JsonProperty("message")]
+        public OpenRouterMessage Message { get; set; }
+    }
+
+    public class OpenRouterResponse
+    {
+        [JsonProperty("choices")]
+        public List<OpenRouterChoice> Choices { get; set; }
     }
 
     public class OpenRouterRequestBody
@@ -80,7 +93,7 @@ namespace Bifrost.Editor
                 NullValueHandling = NullValueHandling.Ignore // Omit fields if their value is null
             });
 
-            Debug.LogWarning($"OpenRouterProvider - JSON PAYLOAD BEING SENT (Newtonsoft): {jsonPayload}");
+            Debug.Log($"OpenRouterProvider - Sending request to {modelName}");
 
             using (UnityWebRequest req = new UnityWebRequest(endpointUrl, "POST"))
             {
@@ -121,7 +134,38 @@ namespace Bifrost.Editor
                     }
                     return null;
                 }
-                return req.downloadHandler.text;
+
+                string responseText = req.downloadHandler.text;
+
+                try
+                {
+                    // Try to parse and extract just the message content
+                    var responseObj = JsonConvert.DeserializeObject<OpenRouterResponse>(responseText);
+                    if (responseObj?.Choices != null && responseObj.Choices.Count > 0 &&
+                        responseObj.Choices[0].Message != null &&
+                        !string.IsNullOrEmpty(responseObj.Choices[0].Message.Content))
+                    {
+                        // Return just the message content for easier processing
+                        return responseObj.Choices[0].Message.Content;
+                    }
+
+                    // If the structured parse failed, try with JObject for more flexibility
+                    var jObj = JObject.Parse(responseText);
+                    if (jObj["choices"] is JArray choices && choices.Count > 0)
+                    {
+                        if (choices[0]["message"] is JObject message && message["content"] != null)
+                        {
+                            return message["content"].ToString();
+                        }
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogWarning($"Failed to parse OpenRouter response as structured object: {ex.Message}. Using raw response.");
+                    // If parsing fails, just return the raw response
+                }
+
+                return responseText;
             }
         }
 

@@ -9,6 +9,9 @@ namespace Bifrost.Editor
 {
     public class BifrostEditorWindow : EditorWindow
     {
+        // Static instance to ensure only one window exists
+        private static BifrostEditorWindow _instance;
+
         private enum Tab { Chat, Settings, Modes, PromptLibrary, SteamGuide, Debug }
         private Tab currentTab = Tab.Chat;
 
@@ -43,27 +46,26 @@ namespace Bifrost.Editor
         [MenuItem("Window/Bifrost AI Assistant")]
         public static void ShowWindow()
         {
+            // If we already have an instance, focus it instead of creating a new one
+            if (_instance != null)
+            {
+                _instance.Focus();
+                return;
+            }
+
             var window = GetWindow<BifrostEditorWindow>(false, "Bifrost AI Assistant", true);
             window.minSize = new Vector2(500, 600);
+            _instance = window;
         }
 
         private async void OnEnable()
         {
+            _instance = this;
+
             Bifrost.Editor.UI.BifrostSettingsUI.EnsureBifrostResourcesFolder();
 
-            chatUI = new BifrostChatUI();
-            settingsUI = new BifrostSettingsUI();
-            modeEditor = new BifrostModeEditor();
-            projectManager = new UnityProjectManager();
-            promptManager = new PromptTemplateManager();
-            contextAnalyzer = new UnityContextAnalyzer();
-            bifrostAgent = new BifrostAgent(promptManager, contextAnalyzer);
-            systemGenerator = new GameSystemGenerator(projectManager, bifrostAgent);
-            imageTo3DGenerator = new ImageTo3DGenerator();
-            promptLibraryUI = new BifrostPromptLibraryUI(promptManager);
-
-            chatUI.OnMessageSent += OnUserMessage;
-            chatUI.OnClearChat += () => { errorMessage = null; };
+            InitializeComponents();
+            RegisterEventHandlers();
 
             if (!EditorPrefs.GetBool(ONBOARDING_SHOWN_KEY, false))
             {
@@ -75,18 +77,52 @@ namespace Bifrost.Editor
             await promptManager.LoadTemplatesAsync();
         }
 
+        private void InitializeComponents()
+        {
+            chatUI = new BifrostChatUI();
+            settingsUI = new BifrostSettingsUI();
+            modeEditor = new BifrostModeEditor();
+            projectManager = new UnityProjectManager();
+            promptManager = new PromptTemplateManager();
+            contextAnalyzer = new UnityContextAnalyzer();
+            bifrostAgent = new BifrostAgent(promptManager, contextAnalyzer);
+            systemGenerator = new GameSystemGenerator(projectManager, bifrostAgent);
+            imageTo3DGenerator = new ImageTo3DGenerator();
+            promptLibraryUI = new BifrostPromptLibraryUI(promptManager);
+        }
+
+        private void RegisterEventHandlers()
+        {
+            if (chatUI != null)
+            {
+                chatUI.OnMessageSent += OnUserMessage;
+                chatUI.OnClearChat += () => { errorMessage = null; };
+            }
+        }
+
         private void OnDisable()
         {
-            chatUI.OnMessageSent -= OnUserMessage;
+            if (chatUI != null)
+            {
+                chatUI.OnMessageSent -= OnUserMessage;
+            }
+
+            // Clear the instance reference if this is the current instance
+            if (_instance == this)
+            {
+                _instance = null;
+            }
         }
 
         private void OnGUI()
         {
-            if (chatUI == null) chatUI = new BifrostChatUI();
-            if (settingsUI == null) settingsUI = new BifrostSettingsUI();
-            if (modeEditor == null) modeEditor = new BifrostModeEditor();
-            if (promptManager == null) promptManager = new PromptTemplateManager();
-            if (promptLibraryUI == null) promptLibraryUI = new BifrostPromptLibraryUI(promptManager);
+            // Ensure components are initialized
+            if (chatUI == null || settingsUI == null || modeEditor == null ||
+                promptManager == null || promptLibraryUI == null)
+            {
+                InitializeComponents();
+                RegisterEventHandlers();
+            }
 
             DrawTabs();
             EditorGUILayout.Space();
@@ -187,6 +223,9 @@ namespace Bifrost.Editor
             var plan = new GameSystemPlan();
             if (llmPlan.steps != null)
             {
+                // Make sure all required base directories exist
+                EnsureBifrostRuntimeDirectories();
+
                 foreach (var step in llmPlan.steps)
                 {
                     if (string.IsNullOrWhiteSpace(step)) continue;
@@ -207,6 +246,43 @@ namespace Bifrost.Editor
                 }
             }
             return plan;
+        }
+
+        private void EnsureBifrostRuntimeDirectories()
+        {
+            // Ensure all base directories for game system generation exist
+            string[] directories = {
+                "Assets/Bifrost",
+                "Assets/Bifrost/Runtime",
+                "Assets/Bifrost/Runtime/Scripts",
+                "Assets/Bifrost/Runtime/Prefabs",
+                "Assets/Bifrost/Runtime/UI",
+                "Assets/Bifrost/Resources"
+            };
+
+            foreach (string dir in directories)
+            {
+                if (!AssetDatabase.IsValidFolder(dir))
+                {
+                    // Get parent directory and folder name
+                    string[] parts = dir.Split('/');
+                    string parentDir = string.Join("/", parts, 0, parts.Length - 1);
+                    string folderName = parts[parts.Length - 1];
+
+                    // Create folder if parent exists
+                    if (AssetDatabase.IsValidFolder(parentDir))
+                    {
+                        AssetDatabase.CreateFolder(parentDir, folderName);
+                    }
+                    else
+                    {
+                        Debug.LogError($"Cannot create directory {dir} because parent {parentDir} doesn't exist");
+                    }
+                }
+            }
+
+            // Make sure all changes are committed to the AssetDatabase
+            AssetDatabase.Refresh();
         }
 
         private async void OnUserMessage(string message)
@@ -289,21 +365,51 @@ namespace Bifrost.Editor
             }
         }
 
-        private void DrawOnboardingPanel()
+        private void DrawInfoPanel(string title, string content, string buttonText = null, System.Action buttonAction = null)
         {
             EditorGUILayout.BeginVertical("box");
-            EditorGUILayout.LabelField("Welcome to The Bifrost!", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField("Bifrost lets you use natural language to develop Unity games.\n\n" +
-                                     "- Use the chat to ask for scripts, assets, or scene changes.\n" +
-                                     "- Configure your LLM provider in Settings.\n" +
-                                     "- Customize Modes and browse Prompts.\n" +
-                                     "- Use the Steam Guide for release tips.\n\n" +
-                                     "Close this message to begin.", EditorStyles.wordWrappedLabel);
-            if (GUILayout.Button("Got it! Close Onboarding"))
+            EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+            EditorGUILayout.LabelField(content, EditorStyles.wordWrappedLabel);
+
+            if (!string.IsNullOrEmpty(buttonText) && buttonAction != null)
             {
-                showOnboarding = false;
+                if (GUILayout.Button(buttonText))
+                {
+                    buttonAction.Invoke();
+                }
             }
+
             EditorGUILayout.EndVertical();
+        }
+
+        private void DrawOnboardingPanel()
+        {
+            DrawInfoPanel(
+                "Welcome to The Bifrost!",
+                "Bifrost lets you use natural language to develop Unity games.\n\n" +
+                "- Use the chat to ask for scripts, assets, or scene changes.\n" +
+                "- Configure your LLM provider in Settings.\n" +
+                "- Customize Modes and browse Prompts.\n" +
+                "- Use the Steam Guide for release tips.\n\n" +
+                "Close this message to begin.",
+                "Got it! Close Onboarding",
+                () => { showOnboarding = false; }
+            );
+        }
+
+        private void DrawSteamGuidePanel()
+        {
+            DrawInfoPanel(
+                "How to Get a Steam-Ready Game",
+                "1. Prepare game for build (scenes, assets, settings).\n" +
+                "2. Integrate Steamworks.NET or Facepunch.Steamworks.\n" +
+                "3. Set up Steam app on Steamworks dashboard.\n" +
+                "4. Build and upload using SteamPipe.\n" +
+                "5. Test with Steam client.\n" +
+                "6. Follow Steam's release checklist.",
+                "Back to Chat",
+                () => { currentTab = Tab.Chat; }
+            );
         }
 
         private void DrawPromptLibraryTab()
@@ -319,23 +425,6 @@ namespace Bifrost.Editor
                     currentTab = Tab.Chat;
                 }
             }
-        }
-
-        private void DrawSteamGuidePanel()
-        {
-            EditorGUILayout.BeginVertical("box");
-            EditorGUILayout.LabelField("How to Get a Steam-Ready Game", EditorStyles.boldLabel);
-            EditorGUILayout.HelpBox("1. Prepare game for build (scenes, assets, settings).\n" +
-                                  "2. Integrate Steamworks.NET or Facepunch.Steamworks.\n" +
-                                  "3. Set up Steam app on Steamworks dashboard.\n" +
-                                  "4. Build and upload using SteamPipe.\n" +
-                                  "5. Test with Steam client.\n" +
-                                  "6. Follow Steam's release checklist.", MessageType.Info);
-            if (GUILayout.Button("Back to Chat"))
-            {
-                currentTab = Tab.Chat;
-            }
-            EditorGUILayout.EndVertical();
         }
 
         private void DrawDebugTab()

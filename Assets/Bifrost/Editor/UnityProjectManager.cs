@@ -101,7 +101,7 @@ namespace Bifrost.Editor
         }
 
         // Create a prefab from a GameObject
-        public string CreatePrefab(string prefabPath, GameObject go)
+        public bool CreatePrefab(string prefabPath, GameObject go)
         {
             try
             {
@@ -110,12 +110,12 @@ namespace Bifrost.Editor
                     AssetDatabase.CreateFolder(System.IO.Path.GetDirectoryName(folder), System.IO.Path.GetFileName(folder));
                 var prefab = PrefabUtility.SaveAsPrefabAsset(go, prefabPath);
                 AssetDatabase.Refresh();
-                return prefab != null ? prefabPath : null;
+                return prefab != null;
             }
             catch (Exception ex)
             {
                 Debug.LogError($"UnityProjectManager: Failed to create prefab: {ex.Message}");
-                return null;
+                return false;
             }
         }
 
@@ -174,7 +174,7 @@ namespace Bifrost.Editor
                     return null;
                 }
                 var newPrefab = UnityEngine.Object.Instantiate(prefab);
-                var resultPath = CreatePrefab(destPath, newPrefab);
+                var resultPath = CreatePrefab(destPath, newPrefab) ? destPath : null;
                 UnityEngine.Object.DestroyImmediate(newPrefab);
                 return resultPath;
             }

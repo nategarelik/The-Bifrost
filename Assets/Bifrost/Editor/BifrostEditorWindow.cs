@@ -287,7 +287,6 @@ namespace Bifrost.Editor
                 pendingPlan = null;
                 if (chatUI != null) chatUI.SetProcessingState(false);
             }
-            lastLLMResponse = chatUI.LastResponse;
         }
 
         private void DrawOnboardingPanel()

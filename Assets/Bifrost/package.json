@@ -7,13 +7,6 @@
   "dependencies": {
     "com.unity.nuget.newtonsoft-json": "3.0.2"
   },
-  "keywords": [
-    "ai",
-    "unity",
-    "editor",
-    "llm",
-    "bifrost"
-  ],
   "author": {
     "name": "Nate Garelik",
     "url": "https://github.com/nategarelik/The-Bifrost"

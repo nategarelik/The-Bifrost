@@ -3,35 +3,95 @@ using UnityEngine.Networking;
 using UnityEngine;
 using System.Text;
 using Bifrost.Editor;
+using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace Bifrost.Editor
 {
+    // Helper classes for Newtonsoft JSON serialization
+    public class OpenRouterMessage
+    {
+        [JsonProperty("role")]
+        public string Role { get; set; }
+
+        [JsonProperty("content")]
+        public string Content { get; set; }
+    }
+
+    public class OpenRouterRequestBody
+    {
+        [JsonProperty("model")]
+        public string Model { get; set; }
+
+        [JsonProperty("messages")]
+        public List<OpenRouterMessage> Messages { get; set; }
+
+        [JsonProperty("max_tokens", NullValueHandling = NullValueHandling.Ignore)]
+        public int? MaxTokens { get; set; }
+
+        [JsonProperty("temperature", NullValueHandling = NullValueHandling.Ignore)]
+        public float? Temperature { get; set; }
+
+        [JsonProperty("top_p", NullValueHandling = NullValueHandling.Ignore)]
+        public float? TopP { get; set; }
+
+        [JsonProperty("frequency_penalty", NullValueHandling = NullValueHandling.Ignore)]
+        public float? FrequencyPenalty { get; set; }
+
+        [JsonProperty("presence_penalty", NullValueHandling = NullValueHandling.Ignore)]
+        public float? PresencePenalty { get; set; }
+
+        // Add other OpenRouter supported fields if needed, e.g.:
+        // [JsonProperty("stream", NullValueHandling = NullValueHandling.Ignore)]
+        // public bool? Stream { get; set; }
+
+        // [JsonProperty("stop", NullValueHandling = NullValueHandling.Ignore)]
+        // public object Stop { get; set; } // Can be string or array of strings
+    }
+
     public class OpenRouterProvider : IBifrostLLMProvider
     {
         public string Name => "OpenRouter";
 
-        public async Task<string> CompleteAsync(string prompt, string model, string apiKey, string endpoint, LLMRequestOptions options)
+        public async Task<string> CompleteAsync(string promptText, string modelName, string apiKey, string endpointUrl, LLMRequestOptions options)
         {
-            var requestBody = new
-            {
-                model = model,
-                messages = new[] {
-                    new { role = "user", content = prompt }
-                },
-                max_tokens = options?.maxTokens ?? 1024,
-                temperature = options?.temperature ?? 0.7f,
-                top_p = options?.topP ?? 1.0f,
-                frequency_penalty = options?.frequencyPenalty ?? 0.0f,
-                presence_penalty = options?.presencePenalty ?? 0.0f
+            var requestMessages = new List<OpenRouterMessage> {
+                new OpenRouterMessage { Role = "user", Content = promptText }
             };
-            string json = JsonUtility.ToJson(requestBody);
-            using (UnityWebRequest req = new UnityWebRequest(endpoint, "POST"))
+
+            var requestBody = new OpenRouterRequestBody
             {
-                byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
+                Model = modelName,
+                Messages = requestMessages
+            };
+
+            if (options != null)
+            {
+                requestBody.MaxTokens = options.maxTokens;
+                requestBody.Temperature = options.temperature;
+                requestBody.TopP = options.topP;
+                requestBody.FrequencyPenalty = options.frequencyPenalty;
+                requestBody.PresencePenalty = options.presencePenalty;
+                // Note: timeoutSeconds from LLMRequestOptions is for the UnityWebRequest, not typically part of OpenRouter JSON body.
+            }
+
+            string jsonPayload = JsonConvert.SerializeObject(requestBody, new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore // Omit fields if their value is null
+            });
+
+            Debug.LogWarning($"OpenRouterProvider - JSON PAYLOAD BEING SENT (Newtonsoft): {jsonPayload}");
+
+            using (UnityWebRequest req = new UnityWebRequest(endpointUrl, "POST"))
+            {
+                req.timeout = options?.timeoutSeconds ?? 60; // Use timeout from options
+                byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonPayload);
                 req.uploadHandler = new UploadHandlerRaw(bodyRaw);
                 req.downloadHandler = new DownloadHandlerBuffer();
                 req.SetRequestHeader("Content-Type", "application/json");
                 req.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+
+                // Add custom headers from LLMRequestOptions
                 if (options != null && options.customHeaders != null)
                 {
                     foreach (var header in options.customHeaders)
@@ -40,9 +100,14 @@ namespace Bifrost.Editor
                             req.SetRequestHeader(header.key, header.value);
                     }
                 }
+                // Optional but recommended OpenRouter headers:
+                // req.SetRequestHeader("HTTP-Referer", "YOUR_APP_URL_OR_PROJECT_NAME"); 
+                // req.SetRequestHeader("X-Title", "YOUR_APP_OR_PROJECT_NAME");
+
                 var op = req.SendWebRequest();
                 while (!op.isDone)
                     await Task.Yield();
+
                 if (req.result != UnityWebRequest.Result.Success)
                 {
                     Debug.LogError($"OpenRouterProvider Error: {req.error} - Status Code: {req.responseCode}");
@@ -63,7 +128,10 @@ namespace Bifrost.Editor
         public async Task<bool> TestConnectionAsync(string apiKey, string endpoint, string model)
         {
             string testPrompt = "Say hello.";
-            string result = await CompleteAsync(testPrompt, model, apiKey, endpoint, new LLMRequestOptions());
+            // Create default options for the test call.
+            // The timeout for the test call will be the default in UnityWebRequest or the one set in CompleteAsync's req.timeout.
+            var testOptions = new LLMRequestOptions();
+            string result = await CompleteAsync(testPrompt, model, apiKey, endpoint, testOptions);
             return !string.IsNullOrEmpty(result);
         }
     }

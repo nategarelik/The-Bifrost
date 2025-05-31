@@ -140,6 +140,7 @@ namespace Bifrost.Editor.UI
                     headerCount--;
                     EditorPrefs.SetInt("Bifrost_Global_CustomHeaderCount", headerCount);
                     i--;
+                    EditorGUILayout.EndHorizontal();
                     continue;
                 }
                 EditorGUILayout.EndHorizontal();
@@ -203,6 +204,7 @@ namespace Bifrost.Editor.UI
                 if (GUILayout.Button("-", GUILayout.Width(20)))
                 {
                     headersProp.DeleteArrayElementAtIndex(i);
+                    EditorGUILayout.EndHorizontal();
                     break;
                 }
                 EditorGUILayout.EndHorizontal();

@@ -23,12 +23,9 @@ namespace Bifrost.Editor
         /// <summary>
         /// Generates a game system from a description. Returns a summary of planned changes for approval.
         /// </summary>
-        public async Task<LLMGameSystemPlan> PlanGameSystemAsync(string description)
+        public async Task<(LLMGameSystemPlan plan, string rawResponse)> PlanGameSystemAsync(string description)
         {
-            // Ask the AI agent to plan the system (now uses schema validation and fallback)
-            var plan = await bifrostAgent.PlanGameSystemAsync(description);
-            await Task.CompletedTask;
-            return plan;
+            return await bifrostAgent.PlanGameSystemAsync(description);
         }
 
         /// <summary>

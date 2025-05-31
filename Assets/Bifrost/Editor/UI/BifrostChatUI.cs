@@ -110,7 +110,7 @@ namespace Bifrost.Editor.UI
 
             foreach (var message in chatHistory)
             {
-                DrawMessage(message);
+                DrawMessage(message, chatArea.width);
             }
 
             GUILayout.EndScrollView();
@@ -122,7 +122,7 @@ namespace Bifrost.Editor.UI
             }
         }
 
-        private void DrawMessage(ChatMessage message)
+        private void DrawMessage(ChatMessage message, float chatWidth)
         {
             GUIStyle style = new GUIStyle(messageStyle);
             style.normal.textColor = message.IsUser ?
@@ -136,7 +136,7 @@ namespace Bifrost.Editor.UI
 
             EditorGUILayout.LabelField($"<b>{(message.IsUser ? "You" : "Bifrost")}</b> ({message.Timestamp:HH:mm})\n{message.Content}",
                 style,
-                GUILayout.MaxWidth(position.width - SCROLL_BAR_WIDTH - MESSAGE_PADDING * 2));
+                GUILayout.MaxWidth(chatWidth - SCROLL_BAR_WIDTH - MESSAGE_PADDING * 2));
 
             if (!message.IsUser)
                 GUILayout.Space(SCROLL_BAR_WIDTH + MESSAGE_PADDING);

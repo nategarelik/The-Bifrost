@@ -143,6 +143,32 @@ namespace Bifrost.Editor
             }
         }
 
+        private GameSystemPlan ConvertToGameSystemPlan(LLMGameSystemPlan llmPlan)
+        {
+            var plan = new GameSystemGenerator.GameSystemPlan();
+            // For now, treat each step as a script, prefab, or UI based on simple keywords (improve as needed)
+            if (llmPlan.steps != null)
+            {
+                foreach (var step in llmPlan.steps)
+                {
+                    // Naive parsing: look for keywords
+                    if (step.ToLower().Contains("script"))
+                    {
+                        plan.Scripts.Add(new GameSystemGenerator.PlannedScript { Path = $"Assets/Bifrost/Runtime/{llmPlan.systemName}_Script.cs", Content = "// TODO: Generated script content" });
+                    }
+                    else if (step.ToLower().Contains("prefab"))
+                    {
+                        plan.Prefabs.Add(new GameSystemGenerator.PlannedPrefab { Path = $"Assets/Bifrost/Runtime/{llmPlan.systemName}_Prefab.prefab", Template = "" });
+                    }
+                    else if (step.ToLower().Contains("ui"))
+                    {
+                        plan.UIs.Add(new GameSystemGenerator.PlannedUI { Path = $"Assets/Bifrost/Runtime/{llmPlan.systemName}_UI.uxml", Template = "" });
+                    }
+                }
+            }
+            return plan;
+        }
+
         private async void OnUserMessage(string message)
         {
             errorMessage = null;
@@ -176,7 +202,8 @@ namespace Bifrost.Editor
                 {
                     // General game system generation
                     chatUI.AddResponse("Analyzing request and planning actions...");
-                    var plan = await systemGenerator.PlanGameSystemAsync(message);
+                    var llmPlan = await systemGenerator.PlanGameSystemAsync(message);
+                    var plan = ConvertToGameSystemPlan(llmPlan);
                     if (plan != null && plan.Scripts.Count + plan.Prefabs.Count + plan.UIs.Count > 0)
                     {
                         pendingPlan = plan;

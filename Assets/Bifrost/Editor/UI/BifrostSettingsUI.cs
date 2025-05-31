@@ -246,6 +246,19 @@ namespace Bifrost.Editor.UI
                 isTestingConnection = false;
             }
         }
+
+        public static void EnsureBifrostResourcesFolder()
+        {
+            string[] parts = { "Assets", "Bifrost", "Resources" };
+            string current = parts[0];
+            for (int i = 1; i < parts.Length; i++)
+            {
+                string next = current + "/" + parts[i];
+                if (!AssetDatabase.IsValidFolder(next))
+                    AssetDatabase.CreateFolder(current, parts[i]);
+                current = next;
+            }
+        }
     }
 
     /// <summary>
@@ -281,22 +294,9 @@ namespace Bifrost.Editor.UI
         public float PresencePenalty => presencePenalty;
         public List<Bifrost.Editor.UI.BifrostSettingsUI.CustomHeader> CustomHeaders => customHeaders;
 
-        public static void EnsureBifrostResourcesFolder()
-        {
-            string[] parts = { "Assets", "Bifrost", "Resources" };
-            string current = parts[0];
-            for (int i = 1; i < parts.Length; i++)
-            {
-                string next = current + "/" + parts[i];
-                if (!AssetDatabase.IsValidFolder(next))
-                    AssetDatabase.CreateFolder(current, parts[i]);
-                current = next;
-            }
-        }
-
         public static BifrostSettings GetOrCreateSettings()
         {
-            EnsureBifrostResourcesFolder();
+            BifrostSettingsUI.EnsureBifrostResourcesFolder();
             var settings = AssetDatabase.LoadAssetAtPath<BifrostSettings>(SETTINGS_PATH);
             if (settings == null)
             {

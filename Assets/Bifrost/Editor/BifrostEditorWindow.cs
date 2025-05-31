@@ -145,7 +145,7 @@ namespace Bifrost.Editor
 
         private GameSystemPlan ConvertToGameSystemPlan(LLMGameSystemPlan llmPlan)
         {
-            var plan = new GameSystemGenerator.GameSystemPlan();
+            var plan = new GameSystemPlan();
             // For now, treat each step as a script, prefab, or UI based on simple keywords (improve as needed)
             if (llmPlan.steps != null)
             {
@@ -154,15 +154,15 @@ namespace Bifrost.Editor
                     // Naive parsing: look for keywords
                     if (step.ToLower().Contains("script"))
                     {
-                        plan.Scripts.Add(new GameSystemGenerator.PlannedScript { Path = $"Assets/Bifrost/Runtime/{llmPlan.systemName}_Script.cs", Content = "// TODO: Generated script content" });
+                        plan.Scripts.Add(new PlannedScript { Path = $"Assets/Bifrost/Runtime/{llmPlan.systemName}_Script.cs", Content = "// TODO: Generated script content" });
                     }
                     else if (step.ToLower().Contains("prefab"))
                     {
-                        plan.Prefabs.Add(new GameSystemGenerator.PlannedPrefab { Path = $"Assets/Bifrost/Runtime/{llmPlan.systemName}_Prefab.prefab", Template = "" });
+                        plan.Prefabs.Add(new PlannedPrefab { Path = $"Assets/Bifrost/Runtime/{llmPlan.systemName}_Prefab.prefab", Template = "" });
                     }
                     else if (step.ToLower().Contains("ui"))
                     {
-                        plan.UIs.Add(new GameSystemGenerator.PlannedUI { Path = $"Assets/Bifrost/Runtime/{llmPlan.systemName}_UI.uxml", Template = "" });
+                        plan.UIs.Add(new PlannedUI { Path = $"Assets/Bifrost/Runtime/{llmPlan.systemName}_UI.uxml", Template = "" });
                     }
                 }
             }

@@ -187,14 +187,38 @@ namespace Bifrost.Editor
 
         public bool CreateScript(string path, string content)
         {
-            // TODO: Implement script file creation logic
-            return true;
+            try
+            {
+                string directory = System.IO.Path.GetDirectoryName(path);
+                if (!System.IO.Directory.Exists(directory))
+                    System.IO.Directory.CreateDirectory(directory);
+                System.IO.File.WriteAllText(path, content);
+                AssetDatabase.ImportAsset(path);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"UnityProjectManager: Failed to create script: {ex.Message}");
+                return false;
+            }
         }
 
         public bool CreateUI(string path, string template)
         {
-            // TODO: Implement UI creation logic
-            return true;
+            try
+            {
+                string directory = System.IO.Path.GetDirectoryName(path);
+                if (!System.IO.Directory.Exists(directory))
+                    System.IO.Directory.CreateDirectory(directory);
+                System.IO.File.WriteAllText(path, template ?? "");
+                AssetDatabase.ImportAsset(path);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"UnityProjectManager: Failed to create UI: {ex.Message}");
+                return false;
+            }
         }
     }
 }

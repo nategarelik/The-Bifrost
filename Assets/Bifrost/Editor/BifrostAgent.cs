@@ -113,7 +113,9 @@ namespace Bifrost.Editor
             try
             {
                 var context = await contextAnalyzer.AnalyzeProjectAsync();
-                string promptWithContext = BuildPromptWithContext(prompt, context);
+                // Prepend instruction for JSON output
+                string schemaInstruction = "Respond ONLY with a JSON object matching this schema: {\"systemName\":string,\"steps\":[string]}";
+                string promptWithContext = schemaInstruction + "\n\n" + BuildPromptWithContext(prompt, context);
                 return await provider.CompleteAsync(promptWithContext, model, apiKey, endpoint, options);
             }
             catch (System.Exception ex)
@@ -153,6 +155,7 @@ namespace Bifrost.Editor
             }
             else
             {
+                Debug.LogError("Raw LLM response: " + (response ?? "<null>"));
                 Debug.LogError("BifrostAgent: Failed to parse LLM response into LLMGameSystemPlan. Using fallback plan.");
                 return LLMGameSystemPlan.Fallback(description);
             }

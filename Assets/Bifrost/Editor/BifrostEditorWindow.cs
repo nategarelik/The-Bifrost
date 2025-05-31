@@ -9,7 +9,7 @@ namespace Bifrost.Editor
 {
     public class BifrostEditorWindow : EditorWindow
     {
-        private enum Tab { Chat, Settings, Modes, PromptLibrary, SteamGuide }
+        private enum Tab { Chat, Settings, Modes, PromptLibrary, SteamGuide, Debug }
         private Tab currentTab = Tab.Chat;
 
         // UI Components
@@ -34,6 +34,11 @@ namespace Bifrost.Editor
         private string errorMessage = null;
         private bool showOnboarding = false;
         private const string ONBOARDING_SHOWN_KEY = "Bifrost_OnboardingShown";
+
+        // Debug info fields
+        private string lastLLMRequest = null;
+        private string lastLLMResponse = null;
+        private string lastLLMParseResult = null;
 
         [MenuItem("Window/Bifrost AI Assistant")]
         public static void ShowWindow()
@@ -113,6 +118,9 @@ namespace Bifrost.Editor
                 case Tab.SteamGuide:
                     DrawSteamGuidePanel();
                     break;
+                case Tab.Debug:
+                    DrawDebugTab();
+                    break;
             }
         }
 
@@ -124,6 +132,7 @@ namespace Bifrost.Editor
             if (GUILayout.Toggle(currentTab == Tab.Modes, new GUIContent("Modes", "Customize AI modes and prompts"), EditorStyles.toolbarButton)) currentTab = Tab.Modes;
             if (GUILayout.Toggle(currentTab == Tab.PromptLibrary, new GUIContent("Prompts", "Browse prompt templates"), EditorStyles.toolbarButton)) currentTab = Tab.PromptLibrary;
             if (GUILayout.Toggle(currentTab == Tab.SteamGuide, new GUIContent("Steam Guide", "Tips for Steam release"), EditorStyles.toolbarButton)) currentTab = Tab.SteamGuide;
+            if (GUILayout.Toggle(currentTab == Tab.Debug, new GUIContent("Debug", "LLM request/response log"), EditorStyles.toolbarButton)) currentTab = Tab.Debug;
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
         }
@@ -226,6 +235,7 @@ namespace Bifrost.Editor
                 else
                 {
                     chatUI.AddResponse("Planning actions...");
+                    lastLLMRequest = message;
                     var llmPlan = await systemGenerator.PlanGameSystemAsync(message);
                     var plan = ConvertToGameSystemPlan(llmPlan);
                     if (plan != null && (plan.Scripts.Any() || plan.Prefabs.Any() || plan.UIs.Any()))
@@ -238,6 +248,7 @@ namespace Bifrost.Editor
                     {
                         chatUI.AddResponse("AI could not generate a valid plan.");
                     }
+                    lastLLMParseResult = (plan != null ? "Success" : "Failed to parse");
                 }
             }
             catch (System.Exception ex)
@@ -275,6 +286,7 @@ namespace Bifrost.Editor
                 pendingPlan = null;
                 if (chatUI != null) chatUI.SetProcessingState(false);
             }
+            lastLLMResponse = chatUI.LastResponse;
         }
 
         private void DrawOnboardingPanel()
@@ -324,6 +336,18 @@ namespace Bifrost.Editor
                 currentTab = Tab.Chat;
             }
             EditorGUILayout.EndVertical();
+        }
+
+        private void DrawDebugTab()
+        {
+            EditorGUILayout.LabelField("LLM Debug Log", EditorStyles.boldLabel);
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Last LLM Request:", EditorStyles.miniBoldLabel);
+            EditorGUILayout.TextArea(lastLLMRequest ?? "<none>", GUILayout.Height(60));
+            EditorGUILayout.LabelField("Last LLM Response:", EditorStyles.miniBoldLabel);
+            EditorGUILayout.TextArea(lastLLMResponse ?? "<none>", GUILayout.Height(100));
+            EditorGUILayout.LabelField("Last Parse Result:", EditorStyles.miniBoldLabel);
+            EditorGUILayout.TextArea(lastLLMParseResult ?? "<none>", GUILayout.Height(40));
         }
     }
 }

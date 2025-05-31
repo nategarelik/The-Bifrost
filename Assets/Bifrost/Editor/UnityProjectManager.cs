@@ -173,9 +173,9 @@ namespace Bifrost.Editor
                     Debug.LogError($"UnityProjectManager: Source prefab not found at {sourcePath}");
                     return null;
                 }
-                var newPrefab = Object.Instantiate(prefab);
+                var newPrefab = UnityEngine.Object.Instantiate(prefab);
                 var resultPath = CreatePrefab(destPath, newPrefab);
-                Object.DestroyImmediate(newPrefab);
+                UnityEngine.Object.DestroyImmediate(newPrefab);
                 return resultPath;
             }
             catch (Exception ex)
@@ -183,6 +183,18 @@ namespace Bifrost.Editor
                 Debug.LogError($"UnityProjectManager: Failed to duplicate prefab: {ex.Message}");
                 return null;
             }
+        }
+
+        public bool CreateScript(string path, string content)
+        {
+            // TODO: Implement script file creation logic
+            return true;
+        }
+
+        public bool CreateUI(string path, string template)
+        {
+            // TODO: Implement UI creation logic
+            return true;
         }
     }
 }

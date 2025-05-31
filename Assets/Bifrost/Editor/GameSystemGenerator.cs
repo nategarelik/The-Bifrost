@@ -27,6 +27,7 @@ namespace Bifrost.Editor
         {
             // Ask the AI agent to plan the system (now uses schema validation and fallback)
             var plan = await bifrostAgent.PlanGameSystemAsync(description);
+            await Task.CompletedTask;
             return plan;
         }
 
@@ -48,7 +49,7 @@ namespace Bifrost.Editor
             // For each planned prefab
             foreach (var prefab in plan.Prefabs)
             {
-                bool created = projectManager.CreatePrefab(prefab.Path, prefab.Template);
+                bool created = projectManager.CreatePrefab(prefab.Path, new GameObject(prefab.Path));
                 if (!created)
                 {
                     Debug.LogError($"GameSystemGenerator: Failed to create prefab at {prefab.Path}");
@@ -66,6 +67,7 @@ namespace Bifrost.Editor
                 }
             }
             AssetDatabase.Refresh();
+            await Task.CompletedTask;
             return true;
         }
     }

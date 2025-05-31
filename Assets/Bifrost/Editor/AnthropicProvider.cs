@@ -52,7 +52,7 @@ namespace Bifrost.Editor
         public async Task<bool> TestConnectionAsync(string apiKey, string endpoint, string model)
         {
             string testPrompt = "Say hello.";
-            string result = await CompleteAsync(testPrompt, model, apiKey, endpoint);
+            string result = await CompleteAsync(testPrompt, model, apiKey, endpoint, new LLMRequestOptions());
             return !string.IsNullOrEmpty(result);
         }
     }

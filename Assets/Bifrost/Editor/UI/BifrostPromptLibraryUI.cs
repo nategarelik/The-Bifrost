@@ -30,6 +30,7 @@ namespace Bifrost.Editor.UI
 
         public void Draw()
         {
+            if (promptManager == null) return;
             EditorGUILayout.LabelField("Prompt Template Library", EditorStyles.boldLabel);
             EditorGUILayout.Space();
             EditorGUILayout.BeginHorizontal();
@@ -40,7 +41,8 @@ namespace Bifrost.Editor.UI
                 if (GUILayout.Button(templateNames[i], (selectedIndex == i) ? EditorStyles.toolbarButton : EditorStyles.miniButton))
                 {
                     selectedIndex = i;
-                    selectedContent = promptManager.GetTemplate(templateNames[i]);
+                    var template = promptManager.GetTemplate(templateNames[i]);
+                    selectedContent = template != null ? template.Content : string.Empty;
                 }
             }
             EditorGUILayout.EndScrollView();

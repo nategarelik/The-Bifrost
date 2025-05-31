@@ -3,6 +3,7 @@ using UnityEngine;
 using Bifrost.Editor.UI;
 using Bifrost.Editor.AI;
 using Bifrost.Editor.AI.Providers;
+using System.Linq;
 
 namespace Bifrost.Editor
 {

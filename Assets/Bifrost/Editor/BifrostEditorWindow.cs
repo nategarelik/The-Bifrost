@@ -27,7 +27,7 @@ namespace Bifrost.Editor
         // State
         private string currentMode = "Code";
         private bool awaitingApproval = false;
-        private LLMGameSystemPlan pendingPlan = null;
+        private GameSystemPlan pendingPlan = null;
         private string lastUserMessage = null;
         private string errorMessage = null;
 
@@ -177,7 +177,7 @@ namespace Bifrost.Editor
                     // General game system generation
                     chatUI.AddResponse("Analyzing request and planning actions...");
                     var plan = await systemGenerator.PlanGameSystemAsync(message);
-                    if (plan != null && plan.steps != null && plan.steps.Length > 0)
+                    if (plan != null && plan.Scripts.Count + plan.Prefabs.Count + plan.UIs.Count > 0)
                     {
                         pendingPlan = plan;
                         awaitingApproval = true;

@@ -1,5 +1,10 @@
 using UnityEditor;
 using UnityEngine;
+using Bifrost.Editor.UI;
+using Bifrost.Editor;
+using System.Threading.Tasks;
+
+#pragma warning disable CS0414 // Field is assigned but its value is never used
 
 public class BifrostEditorWindow : EditorWindow
 {
@@ -7,6 +12,13 @@ public class BifrostEditorWindow : EditorWindow
     private const string ONBOARDING_SHOWN_KEY = "Bifrost_OnboardingShown";
     private BifrostPromptLibraryUI promptLibraryUI;
     private bool showSteamGuide = false;
+    private PromptTemplateManager promptManager;
+    private enum Tab { Chat, Settings, Modes }
+    private Tab currentTab = Tab.Chat;
+    private string errorMessage = null;
+    private BifrostSettingsUI settingsUI;
+    private BifrostModeEditor modeEditor;
+    private BifrostChatUI chatUI;
 
     [MenuItem("Window/Bifrost Editor")]
     public static void ShowWindow()
@@ -16,11 +28,15 @@ public class BifrostEditorWindow : EditorWindow
 
     private async void OnEnable()
     {
+        chatUI = new BifrostChatUI();
+        settingsUI = new BifrostSettingsUI();
+        modeEditor = new BifrostModeEditor();
         if (!EditorPrefs.GetBool(ONBOARDING_SHOWN_KEY, false))
         {
             showOnboarding = true;
             EditorPrefs.SetBool(ONBOARDING_SHOWN_KEY, true);
         }
+        promptManager = new PromptTemplateManager();
         promptLibraryUI = new BifrostPromptLibraryUI(promptManager);
     }
 
@@ -103,5 +119,10 @@ public class BifrostEditorWindow : EditorWindow
             showSteamGuide = false;
         }
         EditorGUILayout.EndVertical();
+    }
+
+    private void DrawChatTab()
+    {
+        chatUI.Draw(new Rect(0, 0, position.width, position.height));
     }
 }

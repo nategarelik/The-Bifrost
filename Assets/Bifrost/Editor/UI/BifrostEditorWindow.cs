@@ -668,4 +668,3 @@ namespace Bifrost.Editor.UI
         }
     }
 }
-}

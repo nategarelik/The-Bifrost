@@ -13,13 +13,17 @@ namespace Bifrost.Editor.UI
 {
     public class BifrostEditorWindow : EditorWindow
     {
-        private bool showOnboarding = false;
+        [SerializeField] private bool showOnboarding = false;
         private const string ONBOARDING_SHOWN_KEY = "Bifrost_OnboardingShown";
+        private const string CURRENT_PLAN_KEY = "Bifrost_CurrentPlan";
+        private const string AWAITING_APPROVAL_KEY = "Bifrost_AwaitingApproval";
+        private const string SELECTED_MODE_KEY = "Bifrost_SelectedMode";
+
         private BifrostPromptLibraryUI promptLibraryUI;
-        private bool showSteamGuide = false;
+        [SerializeField] private bool showSteamGuide = false;
         private PromptTemplateManager promptManager;
         private enum Tab { Chat, Settings, Modes, PromptLibrary, Debug }
-        private Tab currentTab = Tab.Chat;
+        [SerializeField] private Tab currentTab = Tab.Chat;
         private string errorMessage = null;
         private BifrostSettingsUI settingsUI;
         private BifrostModeEditor modeEditor;
@@ -28,12 +32,12 @@ namespace Bifrost.Editor.UI
         private const int MaxLogMessages = 100;
         private BifrostAgent bifrostAgent;
         private UnityContextAnalyzer contextAnalyzer;
-        private string selectedMode = "GameDev";
+        [SerializeField] private string selectedMode = "GameDev";
         private List<string> availableModes = new List<string> { "Code", "Architect", "Designer", "GameDev" };
         private GameSystemGenerator systemGenerator;
         private UnityProjectManager projectManager;
         private LLMGameSystemPlan currentPlan;
-        private bool awaitingApproval = false;
+        [SerializeField] private bool awaitingApproval = false;
 
         [MenuItem("Window/Bifrost AI Assistant")]
         public static void ShowWindow()
@@ -55,12 +59,83 @@ namespace Bifrost.Editor.UI
             systemGenerator = new GameSystemGenerator(projectManager, bifrostAgent);
             chatUI.OnMessageSent += OnUserMessageAsync;
             chatUI.OnClearChat += () => LogToPanel("Chat history cleared.");
+
+            // Restore persistent state after recompilation
+            RestoreState();
+
             if (!EditorPrefs.GetBool(ONBOARDING_SHOWN_KEY, false))
             {
                 showOnboarding = true;
                 EditorPrefs.SetBool(ONBOARDING_SHOWN_KEY, true);
             }
             LogToPanel("Bifrost Editor Window enabled.");
+        }
+
+        private void RestoreState()
+        {
+            // Restore selected mode
+            selectedMode = EditorPrefs.GetString(SELECTED_MODE_KEY, "GameDev");
+
+            // Restore approval state
+            awaitingApproval = EditorPrefs.GetBool(AWAITING_APPROVAL_KEY, false);
+
+            // Restore current plan if awaiting approval
+            if (awaitingApproval)
+            {
+                string planJson = EditorPrefs.GetString(CURRENT_PLAN_KEY, "");
+                if (!string.IsNullOrEmpty(planJson))
+                {
+                    try
+                    {
+                        currentPlan = JsonUtility.FromJson<LLMGameSystemPlan>(planJson);
+                        LogToPanel($"Restored plan: {currentPlan?.systemName} (awaiting approval)");
+
+                        // Add a message to chat indicating the plan was restored
+                        if (chatUI != null && currentPlan != null)
+                        {
+                            chatUI.AddResponse($"📋 Plan restored after recompilation: {currentPlan.systemName}\n⚠️ Use the 'Apply Plan' button below to execute.");
+                        }
+                    }
+                    catch (System.Exception ex)
+                    {
+                        LogToPanel($"Failed to restore plan: {ex.Message}");
+                        awaitingApproval = false;
+                        EditorPrefs.DeleteKey(CURRENT_PLAN_KEY);
+                        EditorPrefs.SetBool(AWAITING_APPROVAL_KEY, false);
+                    }
+                }
+                else
+                {
+                    awaitingApproval = false;
+                    EditorPrefs.SetBool(AWAITING_APPROVAL_KEY, false);
+                }
+            }
+        }
+
+        private void SaveState()
+        {
+            // Save selected mode
+            EditorPrefs.SetString(SELECTED_MODE_KEY, selectedMode);
+
+            // Save approval state and plan
+            EditorPrefs.SetBool(AWAITING_APPROVAL_KEY, awaitingApproval);
+
+            if (awaitingApproval && currentPlan != null)
+            {
+                try
+                {
+                    string planJson = JsonUtility.ToJson(currentPlan);
+                    EditorPrefs.SetString(CURRENT_PLAN_KEY, planJson);
+                }
+                catch (System.Exception ex)
+                {
+                    LogToPanel($"Failed to save plan: {ex.Message}");
+                }
+            }
+            else
+            {
+                EditorPrefs.DeleteKey(CURRENT_PLAN_KEY);
+            }
         }
 
         private void LogToPanel(string message)
@@ -76,6 +151,7 @@ namespace Bifrost.Editor.UI
             chatUI.SetProcessingState(true);
             errorMessage = null;
             awaitingApproval = false;
+            SaveState(); // Save state immediately
             LogToPanel($"User message: {message} (Mode: {selectedMode})");
             try
             {
@@ -85,6 +161,7 @@ namespace Bifrost.Editor.UI
                 {
                     currentPlan = llmPlan;
                     awaitingApproval = true;
+                    SaveState(); // Save state with new plan
                     chatUI.AddResponse($"AI Plan: {llmPlan.systemName}\n{string.Join("\n", llmPlan.steps)}\n\n⚠️ Plan ready for review. Use the 'Apply Plan' button below to execute.");
                     LogToPanel($"AI plan received: {llmPlan.systemName} with {llmPlan.steps.Length} steps");
                 }
@@ -146,6 +223,7 @@ namespace Bifrost.Editor.UI
                 chatUI.SetProcessingState(false);
                 awaitingApproval = false;
                 currentPlan = null;
+                SaveState(); // Clear saved plan after applying
             }
         }
 
@@ -536,6 +614,7 @@ namespace Bifrost.Editor.UI
                 {
                     awaitingApproval = false;
                     currentPlan = null;
+                    SaveState(); // Save state when plan is cancelled
                     chatUI.AddResponse("Plan cancelled.");
                     LogToPanel("Plan cancelled by user.");
                 }
@@ -638,6 +717,7 @@ namespace Bifrost.Editor.UI
                     if (!isSelected)
                     {
                         selectedMode = availableModes[i];
+                        SaveState(); // Save state when mode changes
                         LogToPanel($"Mode changed to: {selectedMode}");
                     }
                 }

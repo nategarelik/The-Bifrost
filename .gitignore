@@ -85,8 +85,6 @@ PackageCache/
 # Uncomment if you want to exclude it
 # Assets/Plugins/websocket-sharp.dll
 
-# MCP Unity reference (external repo)
-
 
 # Temporary MCP server files
 *.mcp.tmp

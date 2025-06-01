@@ -6,6 +6,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
 using Newtonsoft.Json.Linq;
 using System.Linq;
+using Bifrost.Editor.AI.MCP;
 
 namespace Bifrost.Editor.AI.MCP.Tools.Scene
 {

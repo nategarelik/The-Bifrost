@@ -3,6 +3,8 @@ using UnityEngine;
 using Bifrost.Editor.UI;
 using Bifrost.Editor.Settings;
 using Bifrost.Editor.Prompts;
+using Bifrost.Editor.AI;
+using Bifrost.Editor.Context;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
@@ -23,6 +25,10 @@ namespace Bifrost.Editor.UI
         private BifrostChatUI chatUI;
         private List<string> logMessages = new List<string>();
         private const int MaxLogMessages = 100;
+        private BifrostAgent bifrostAgent;
+        private UnityContextAnalyzer contextAnalyzer;
+        private string selectedMode = "GameDev";
+        private List<string> availableModes = new List<string> { "Code", "Architect", "Designer", "GameDev" };
 
         [MenuItem("Window/Bifrost AI Assistant")]
         public static void ShowWindow()
@@ -36,16 +42,18 @@ namespace Bifrost.Editor.UI
             chatUI = new BifrostChatUI();
             settingsUI = new BifrostSettingsUI();
             modeEditor = new BifrostModeEditor();
+            promptManager = new PromptTemplateManager();
+            promptLibraryUI = new BifrostPromptLibraryUI(promptManager);
+            contextAnalyzer = new UnityContextAnalyzer();
+            bifrostAgent = new BifrostAgent(promptManager, contextAnalyzer);
+            chatUI.OnMessageSent += OnUserMessageAsync;
+            chatUI.OnClearChat += () => LogToPanel("Chat history cleared.");
             if (!EditorPrefs.GetBool(ONBOARDING_SHOWN_KEY, false))
             {
                 showOnboarding = true;
                 EditorPrefs.SetBool(ONBOARDING_SHOWN_KEY, true);
             }
-            promptManager = new PromptTemplateManager();
-            promptLibraryUI = new BifrostPromptLibraryUI(promptManager);
-            // Subscribe to chat events for logging
-            chatUI.OnMessageSent += (msg) => LogToPanel($"User: {msg}");
-            chatUI.OnClearChat += () => LogToPanel("Chat history cleared.");
+            LogToPanel("Bifrost Editor Window enabled.");
         }
 
         private void LogToPanel(string message)
@@ -53,11 +61,44 @@ namespace Bifrost.Editor.UI
             if (logMessages.Count >= MaxLogMessages)
                 logMessages.RemoveAt(0);
             logMessages.Add($"[{System.DateTime.Now:HH:mm:ss}] {message}");
+            Debug.Log($"[Bifrost] {message}");
+        }
+
+        private async void OnUserMessageAsync(string message)
+        {
+            chatUI.SetProcessingState(true);
+            errorMessage = null;
+            LogToPanel($"User message: {message} (Mode: {selectedMode})");
+            try
+            {
+                // Optionally prepend mode to the prompt
+                string modePrompt = $"[Mode: {selectedMode}]\n{message}";
+                var (llmPlan, rawResponse) = await bifrostAgent.PlanGameSystemAsync(modePrompt);
+                if (llmPlan != null && llmPlan.steps != null && llmPlan.steps.Count > 0)
+                {
+                    chatUI.AddResponse($"AI Plan:\n{string.Join("\n", llmPlan.steps)}");
+                    LogToPanel("AI plan received and displayed.");
+                }
+                else
+                {
+                    chatUI.AddResponse("AI did not return a valid plan.");
+                    LogToPanel("AI did not return a valid plan.");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                errorMessage = $"Error: {ex.Message}";
+                chatUI.AddResponse($"Error: {ex.Message}");
+                LogToPanel($"Error: {ex.Message}");
+            }
+            finally
+            {
+                chatUI.SetProcessingState(false);
+            }
         }
 
         private void OnGUI()
         {
-            // Null checks and re-initialization
             if (chatUI == null) chatUI = new BifrostChatUI();
             if (settingsUI == null) settingsUI = new BifrostSettingsUI();
             if (modeEditor == null) modeEditor = new BifrostModeEditor();
@@ -92,7 +133,7 @@ namespace Bifrost.Editor.UI
                     if (settingsUI != null) settingsUI.Draw();
                     break;
                 case Tab.Modes:
-                    if (modeEditor != null) modeEditor.Draw();
+                    DrawModesTab();
                     break;
                 case Tab.PromptLibrary:
                     if (promptLibraryUI != null) DrawPromptLibraryTab();
@@ -164,6 +205,25 @@ namespace Bifrost.Editor.UI
                 errorMessage = $"Error in chat UI: {ex.Message}";
                 LogToPanel($"Error in chat UI: {ex.Message}");
             }
+        }
+
+        private void DrawModesTab()
+        {
+            EditorGUILayout.LabelField("Select AI Mode:", EditorStyles.boldLabel);
+            for (int i = 0; i < availableModes.Count; i++)
+            {
+                bool isSelected = selectedMode == availableModes[i];
+                if (GUILayout.Toggle(isSelected, availableModes[i], EditorStyles.radioButton))
+                {
+                    if (!isSelected)
+                    {
+                        selectedMode = availableModes[i];
+                        LogToPanel($"Mode changed to: {selectedMode}");
+                    }
+                }
+            }
+            EditorGUILayout.Space();
+            modeEditor.Draw();
         }
 
         private void DrawDebugTab()

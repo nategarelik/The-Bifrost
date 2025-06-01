@@ -3,7 +3,7 @@ using UnityEditor;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Bifrost.Editor.AI;
-using Bifrost.Editor.Prompts;
+using Bifrost.Editor.AI.Prompts;
 
 namespace Bifrost.Editor.AssetGeneration
 {

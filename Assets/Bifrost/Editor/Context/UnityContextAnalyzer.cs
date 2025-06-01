@@ -4,6 +4,7 @@ using UnityEditor.SceneManagement;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
+using Bifrost.Editor.Context;
 
 namespace Bifrost.Editor.Context
 {

@@ -3,8 +3,9 @@ using UnityEngine.Networking;
 using UnityEngine;
 using System.Text;
 using Bifrost.Editor;
+using Bifrost.Editor.AI;
 
-namespace Bifrost.Editor
+namespace Bifrost.Editor.AI.Providers
 {
     public class AnthropicProvider : IBifrostLLMProvider
     {

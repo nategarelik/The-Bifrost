@@ -5,6 +5,8 @@ using Bifrost.Editor.AI;
 using Bifrost.Editor.AI.Providers;
 using System.Linq;
 using Bifrost.Editor.Prompts;
+using Bifrost.Editor.Context;
+using Bifrost.Editor.Settings;
 
 namespace Bifrost.Editor.AI
 {
@@ -13,13 +15,13 @@ namespace Bifrost.Editor.AI
         private IBifrostLLMProvider provider;
         private PromptTemplateManager promptManager;
         private UnityContextAnalyzer contextAnalyzer;
-        private Bifrost.Editor.UI.IApiKeyStorage apiKeyStorage;
+        private Bifrost.Editor.Settings.IApiKeyStorage apiKeyStorage;
 
-        public BifrostAgent(PromptTemplateManager promptManager, UnityContextAnalyzer contextAnalyzer, Bifrost.Editor.UI.IApiKeyStorage apiKeyStorage = null)
+        public BifrostAgent(PromptTemplateManager promptManager, UnityContextAnalyzer contextAnalyzer, Bifrost.Editor.Settings.IApiKeyStorage apiKeyStorage = null)
         {
             this.promptManager = promptManager;
             this.contextAnalyzer = contextAnalyzer;
-            this.apiKeyStorage = apiKeyStorage ?? new Bifrost.Editor.UI.DefaultEditorPrefsApiKeyStorage();
+            this.apiKeyStorage = apiKeyStorage ?? new Bifrost.Editor.Settings.DefaultEditorPrefsApiKeyStorage();
         }
 
         private void GetProviderSettings(out BifrostProvider providerType, out string apiKey, out string endpoint, out string model)

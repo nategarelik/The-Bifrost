@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.IO;
 using System.Linq;
-using Bifrost.Editor.Prompts;
+using Bifrost.Editor.AI.Prompts;
 
 namespace Bifrost.Editor.Prompts
 {
@@ -18,7 +18,7 @@ namespace Bifrost.Editor.Prompts
         {
             public string Name;
             public string Content;
-            public PromptTemplateCategory Category;
+            public Bifrost.Editor.AI.Prompts.PromptTemplateCategory Category;
         }
         private Dictionary<string, PromptTemplate> templates = new Dictionary<string, PromptTemplate>();
         private bool isLoaded = false;
@@ -33,8 +33,8 @@ namespace Bifrost.Editor.Prompts
             {
                 // Parse category from filename: e.g., "2D_BasicMovement.txt" => TwoD
                 var split = asset.name.Split('_');
-                PromptTemplateCategory cat = PromptTemplateCategory.General;
-                if (split.Length > 1 && System.Enum.TryParse<PromptTemplateCategory>(split[0], true, out var parsedCat))
+                Bifrost.Editor.AI.Prompts.PromptTemplateCategory cat = Bifrost.Editor.AI.Prompts.PromptTemplateCategory.General;
+                if (split.Length > 1 && System.Enum.TryParse<Bifrost.Editor.AI.Prompts.PromptTemplateCategory>(split[0], true, out var parsedCat))
                     cat = parsedCat;
                 templates[asset.name] = new PromptTemplate
                 {
@@ -60,7 +60,7 @@ namespace Bifrost.Editor.Prompts
             return null;
         }
 
-        public List<string> GetAllTemplateNames(PromptTemplateCategory? category = null)
+        public List<string> GetAllTemplateNames(Bifrost.Editor.AI.Prompts.PromptTemplateCategory? category = null)
         {
             if (!isLoaded)
                 return new List<string>();

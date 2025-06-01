@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Bifrost.Editor.Settings;
 
 namespace Bifrost.Editor.AI
 {
@@ -17,6 +18,6 @@ namespace Bifrost.Editor.AI
         public float frequencyPenalty = 0.0f;
         public float presencePenalty = 0.0f;
         public int timeoutSeconds = 60;
-        public System.Collections.Generic.List<Bifrost.Editor.UI.BifrostSettingsUI.CustomHeader> customHeaders = new System.Collections.Generic.List<Bifrost.Editor.UI.BifrostSettingsUI.CustomHeader>();
+        public System.Collections.Generic.List<Bifrost.Editor.Settings.BifrostSettingsUI.CustomHeader> customHeaders = new System.Collections.Generic.List<Bifrost.Editor.Settings.BifrostSettingsUI.CustomHeader>();
     }
 }

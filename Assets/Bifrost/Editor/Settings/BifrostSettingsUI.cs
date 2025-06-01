@@ -3,6 +3,7 @@ using UnityEditor;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Bifrost.Editor.AI;
 
 namespace Bifrost.Editor.Settings
 {
@@ -46,7 +47,7 @@ namespace Bifrost.Editor.Settings
         private bool useGlobalSettings;
         private const string GLOBAL_SETTINGS_KEY = "Bifrost_GlobalSettings";
         private const string GLOBAL_USE_KEY = "Bifrost_UseGlobalSettings";
-        private Bifrost.Editor.BifrostAgent testAgent;
+        private Bifrost.Editor.AI.BifrostAgent testAgent;
         private bool isTestingConnection = false;
         private IApiKeyStorage apiKeyStorage = new DefaultEditorPrefsApiKeyStorage();
 
@@ -62,7 +63,7 @@ namespace Bifrost.Editor.Settings
             useGlobalSettings = EditorPrefs.GetBool(GLOBAL_USE_KEY, false);
             settings = BifrostSettings.GetOrCreateSettings();
             serializedSettings = new SerializedObject(settings);
-            testAgent = new Bifrost.Editor.BifrostAgent(null, null); // Only for connection test
+            testAgent = new Bifrost.Editor.AI.BifrostAgent(null, null); // Only for connection test
         }
 
         public void Draw()

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
+using Bifrost.Editor.Settings;
 
 namespace Bifrost.Editor.Settings
 {
@@ -22,7 +23,7 @@ namespace Bifrost.Editor.Settings
         [SerializeField] private float topP = 1.0f;
         [SerializeField] private float frequencyPenalty = 0.0f;
         [SerializeField] private float presencePenalty = 0.0f;
-        [SerializeField] private List<Bifrost.Editor.UI.BifrostSettingsUI.CustomHeader> customHeaders = new List<Bifrost.Editor.UI.BifrostSettingsUI.CustomHeader>();
+        [SerializeField] private List<BifrostSettingsUI.CustomHeader> customHeaders = new List<BifrostSettingsUI.CustomHeader>();
 
         public BifrostProvider Provider => provider;
         public string OpenAIApiKey => openAIApiKey;
@@ -35,7 +36,7 @@ namespace Bifrost.Editor.Settings
         public float TopP => topP;
         public float FrequencyPenalty => frequencyPenalty;
         public float PresencePenalty => presencePenalty;
-        public List<Bifrost.Editor.UI.BifrostSettingsUI.CustomHeader> CustomHeaders => customHeaders;
+        public List<BifrostSettingsUI.CustomHeader> CustomHeaders => customHeaders;
 
         public static BifrostSettings GetOrCreateSettings()
         {

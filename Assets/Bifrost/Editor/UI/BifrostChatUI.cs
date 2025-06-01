@@ -291,7 +291,7 @@ namespace Bifrost.Editor.UI
     }
 
     [Serializable]
-    private class ChatHistoryWrapper
+    class ChatHistoryWrapper
     {
         public List<ChatMessage> Messages;
     }

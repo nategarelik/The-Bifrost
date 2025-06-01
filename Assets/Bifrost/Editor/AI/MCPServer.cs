@@ -33,7 +33,7 @@ namespace Bifrost.Editor.AI
             this.requestTimeout = timeoutSeconds;
         }
 
-        public async Task StartAsync()
+        public void Start()
         {
             if (isRunning) return;
 
@@ -49,7 +49,7 @@ namespace Bifrost.Editor.AI
                 OnLog?.Invoke($"MCP Server started on http://localhost:{port}");
 
                 // Start listening for WebSocket connections
-                _ = Task.Run(() => AcceptWebSocketConnectionsAsync(cancellationTokenSource.Token));
+                Task.Run(() => AcceptWebSocketConnectionsAsync(cancellationTokenSource.Token));
             }
             catch (Exception ex)
             {
@@ -376,13 +376,11 @@ namespace Bifrost.Editor.AI
             }
 
             // Execute on main thread
-            bool success = false;
             EditorApplication.delayCall += () =>
             {
                 try
                 {
                     EditorApplication.ExecuteMenuItem(menuPath);
-                    success = true;
                 }
                 catch (Exception ex)
                 {

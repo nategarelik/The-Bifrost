@@ -923,7 +923,7 @@ namespace Bifrost.Editor.UI
             EditorGUILayout.EndVertical();
         }
 
-        private async void StartMCPServer()
+        private void StartMCPServer()
         {
             if (mcpServer != null && mcpServer.IsRunning)
             {
@@ -953,7 +953,7 @@ namespace Bifrost.Editor.UI
                     LogToPanel($"MCP Client disconnected: {clientId}");
                 };
 
-                await mcpServer.StartAsync();
+                mcpServer.Start();
                 mcpServerRunning = mcpServer.IsRunning;
 
                 if (mcpServerRunning)
@@ -1013,11 +1013,11 @@ namespace Bifrost.Editor.UI
             }
         }
 
-        private async void RestartMCPServer()
+        private void RestartMCPServer()
         {
             StopMCPServer();
-            await Task.Delay(1000); // Give it a moment to fully stop
-            StartMCPServer();
+            // Give it a moment to fully stop, then start
+            EditorApplication.delayCall += () => StartMCPServer();
         }
 
         private void CopyClaudeConfig()

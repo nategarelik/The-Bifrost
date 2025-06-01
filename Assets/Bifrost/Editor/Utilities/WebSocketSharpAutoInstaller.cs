@@ -20,6 +20,17 @@ public static class WebSocketSharpAutoInstaller
         }
     }
 
+    [MenuItem("Tools/Bifrost/Install WebSocket Sharp")]
+    public static void ForceInstall()
+    {
+        if (File.Exists(DllPath))
+        {
+            Debug.Log("[Bifrost] websocket-sharp.dll already exists at: " + DllPath);
+            return;
+        }
+        TryInstall();
+    }
+
     private static void TryInstall()
     {
         EditorApplication.update -= TryInstall;
@@ -29,19 +40,26 @@ public static class WebSocketSharpAutoInstaller
         try
         {
             Directory.CreateDirectory("Assets/Plugins");
+            Directory.CreateDirectory("Temp");
+            
+            Debug.Log("[Bifrost] Downloading from: " + NugetUrl);
             using (var client = new WebClient())
             {
                 client.DownloadFile(NugetUrl, TempZip);
             }
+            Debug.Log("[Bifrost] Download complete. Extracting...");
 
             using (var archive = ZipFile.OpenRead(TempZip))
             {
                 foreach (var entry in archive.Entries)
                 {
-                    if (entry.FullName.EndsWith("lib/net20/websocket-sharp.dll"))
+                    Debug.Log("[Bifrost] Found entry: " + entry.FullName);
+                    if (entry.FullName.EndsWith("lib/net20/websocket-sharp.dll") || 
+                        entry.FullName.EndsWith("lib/net35/websocket-sharp.dll") ||
+                        entry.FullName.Contains("websocket-sharp.dll"))
                     {
                         entry.ExtractToFile(DllPath, true);
-                        Debug.Log("[Bifrost] websocket-sharp.dll installed to Assets/Plugins/");
+                        Debug.Log("[Bifrost] ✅ websocket-sharp.dll installed to Assets/Plugins/");
                         AssetDatabase.Refresh();
                         break;
                     }
@@ -51,7 +69,8 @@ public static class WebSocketSharpAutoInstaller
         }
         catch (System.Exception ex)
         {
-            Debug.LogError("[Bifrost] Failed to auto-install websocket-sharp: " + ex.Message);
+            Debug.LogError("[Bifrost] ❌ Failed to auto-install websocket-sharp: " + ex.Message);
+            Debug.LogError("[Bifrost] Please manually download websocket-sharp.dll from: https://github.com/sta/websocket-sharp/releases");
         }
     }
 }

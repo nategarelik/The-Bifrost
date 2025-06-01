@@ -42,7 +42,7 @@ namespace Bifrost.Editor.AI
                 {
                     behavior.OnClientConnected = OnClientConnected;
                     behavior.OnClientDisconnected = OnClientDisconnected;
-                    behavior.OnError = OnError;
+                    behavior.OnWebSocketError = OnError;
                     behavior.OnLog = OnLog;
                 });
 
@@ -80,7 +80,7 @@ namespace Bifrost.Editor.AI
     {
         public Action<string> OnClientConnected;
         public Action<string> OnClientDisconnected;
-        public Action<string> OnError;
+        public Action<string> OnWebSocketError;
         public Action<string> OnLog;
 
         protected override void OnOpen()
@@ -97,7 +97,7 @@ namespace Bifrost.Editor.AI
 
         protected override void OnError(ErrorEventArgs e)
         {
-            OnError?.Invoke($"WebSocket error with client {ID}: {e.Message}");
+            OnWebSocketError?.Invoke($"WebSocket error with client {ID}: {e.Message}");
         }
 
         protected override void OnMessage(MessageEventArgs e)
@@ -152,7 +152,7 @@ namespace Bifrost.Editor.AI
             }
             catch (Exception ex)
             {
-                OnError?.Invoke($"Error processing message from {ID}: {ex.Message}");
+                OnWebSocketError?.Invoke($"Error processing message from {ID}: {ex.Message}");
 
                 // Send error response
                 JObject errorResponse = new JObject

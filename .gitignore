@@ -80,3 +80,18 @@ TestResults/
 
 # Unity Package Manager cache
 PackageCache/
+
+# WebSocket DLL (included in repo for convenience)
+# Uncomment if you want to exclude it
+# Assets/Plugins/websocket-sharp.dll
+
+# MCP Unity reference (external repo)
+mcp-unity/
+
+# Temporary MCP server files
+*.mcp.tmp
+mcp-server-state.json
+
+# Editor preferences and state
+EditorPrefs.asset
+Bifrost_*.pref

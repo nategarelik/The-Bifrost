@@ -74,7 +74,7 @@ namespace Bifrost.Editor.UI
                 // Optionally prepend mode to the prompt
                 string modePrompt = $"[Mode: {selectedMode}]\n{message}";
                 var (llmPlan, rawResponse) = await bifrostAgent.PlanGameSystemAsync(modePrompt);
-                if (llmPlan != null && llmPlan.steps != null && llmPlan.steps.Count > 0)
+                if (llmPlan != null && llmPlan.steps != null && llmPlan.steps.Length > 0)
                 {
                     chatUI.AddResponse($"AI Plan:\n{string.Join("\n", llmPlan.steps)}");
                     LogToPanel("AI plan received and displayed.");

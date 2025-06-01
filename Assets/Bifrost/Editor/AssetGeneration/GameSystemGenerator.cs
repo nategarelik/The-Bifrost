@@ -3,8 +3,9 @@ using UnityEditor;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Bifrost.Editor.AI;
+using Bifrost.Editor.Prompts;
 
-namespace Bifrost.Editor
+namespace Bifrost.Editor.AssetGeneration
 {
     /// <summary>
     /// Generates complete game systems (scripts, prefabs, UIs, etc.) from a text description using the AI agent.

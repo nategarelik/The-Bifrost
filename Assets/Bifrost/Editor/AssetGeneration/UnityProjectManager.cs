@@ -7,7 +7,7 @@ using System.IO;
 using UnityEngine.ProBuilder;
 #endif
 
-namespace Bifrost.Editor
+namespace Bifrost.Editor.AssetGeneration
 {
     public class UnityProjectManager
     {

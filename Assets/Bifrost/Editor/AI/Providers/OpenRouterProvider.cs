@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Bifrost.Editor
+namespace Bifrost.Editor.AI.Providers
 {
     // Helper classes for Newtonsoft JSON serialization
     public class OpenRouterMessage

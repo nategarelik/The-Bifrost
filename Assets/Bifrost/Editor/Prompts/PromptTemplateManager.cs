@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.IO;
 using System.Linq;
-using Bifrost.Editor.AI.Prompts;
+using Bifrost.Editor.Prompts;
 
-namespace Bifrost.Editor
+namespace Bifrost.Editor.Prompts
 {
     /// <summary>
     /// Loads and manages AI prompt templates from Resources/Prompts.

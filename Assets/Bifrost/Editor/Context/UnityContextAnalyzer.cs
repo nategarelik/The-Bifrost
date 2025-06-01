@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
 
-namespace Bifrost.Editor
+namespace Bifrost.Editor.Context
 {
     /// <summary>
     /// Analyzes the Unity project state and provides structured context for the AI agent.

@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace Bifrost.Editor
+namespace Bifrost.Editor.AI
 {
     public interface IBifrostLLMProvider
     {

@@ -4,7 +4,7 @@ using UnityEngine;
 using System.Text;
 using Bifrost.Editor;
 
-namespace Bifrost.Editor
+namespace Bifrost.Editor.AI.Providers
 {
     public class OpenAIProvider : IBifrostLLMProvider
     {

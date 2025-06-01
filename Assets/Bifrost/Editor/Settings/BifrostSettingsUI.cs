@@ -4,7 +4,7 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace Bifrost.Editor.UI
+namespace Bifrost.Editor.Settings
 {
     // WARNING: EditorPrefs is not secure for storing API keys in production. Use a secure storage method for release builds.
 

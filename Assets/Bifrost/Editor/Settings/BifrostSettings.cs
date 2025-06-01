@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 
-namespace Bifrost.Editor.UI
+namespace Bifrost.Editor.Settings
 {
     /// <summary>
     /// ScriptableObject for Bifrost persistent settings

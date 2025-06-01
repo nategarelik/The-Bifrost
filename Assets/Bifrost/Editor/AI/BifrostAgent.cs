@@ -4,8 +4,9 @@ using Bifrost.Editor.UI;
 using Bifrost.Editor.AI;
 using Bifrost.Editor.AI.Providers;
 using System.Linq;
+using Bifrost.Editor.Prompts;
 
-namespace Bifrost.Editor
+namespace Bifrost.Editor.AI
 {
     public class BifrostAgent
     {

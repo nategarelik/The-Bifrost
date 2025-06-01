@@ -12,6 +12,8 @@ namespace Bifrost.Editor
     {
         private const string GENERATED_MODELS_PATH = "Assets/Bifrost/Runtime/BifrostGameSystems/GeneratedModels";
 
+        // TODO: This is a stub. Implement AI-powered 3D model generation and API integration here.
+
         public async Task<string> Generate3DModelFromImageAsync(string imagePath)
         {
             if (!File.Exists(imagePath))
@@ -88,4 +90,4 @@ namespace Bifrost.Editor
             return prefabPath;
         }
     }
-} 
+}

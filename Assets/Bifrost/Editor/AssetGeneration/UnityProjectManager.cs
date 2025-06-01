@@ -277,5 +277,36 @@ namespace Bifrost.Editor
                 return false;
             }
         }
+
+        public bool CreateScriptableObject(string path, string typeName, string jsonData)
+        {
+            try
+            {
+                if (!EnsureDirectoryExists(path))
+                {
+                    Debug.LogError($"UnityProjectManager: Failed to create directory structure for ScriptableObject: {path}");
+                    return false;
+                }
+                var type = System.Type.GetType(typeName);
+                if (type == null || !typeof(ScriptableObject).IsAssignableFrom(type))
+                {
+                    Debug.LogError($"UnityProjectManager: Type '{typeName}' is not a valid ScriptableObject type.");
+                    return false;
+                }
+                var so = ScriptableObject.CreateInstance(type);
+                if (!string.IsNullOrEmpty(jsonData))
+                {
+                    JsonUtility.FromJsonOverwrite(jsonData, so);
+                }
+                AssetDatabase.CreateAsset(so, path);
+                AssetDatabase.SaveAssets();
+                return true;
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"UnityProjectManager: Failed to create ScriptableObject: {ex.Message}");
+                return false;
+            }
+        }
     }
 }

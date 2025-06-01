@@ -6,6 +6,8 @@ using System.Collections.Generic;
 
 namespace Bifrost.Editor.UI
 {
+    // WARNING: EditorPrefs is not secure for storing API keys in production. Use a secure storage method for release builds.
+
     public enum BifrostProvider
     {
         OpenAI,
@@ -14,6 +16,24 @@ namespace Bifrost.Editor.UI
         HuggingFace,
         OpenRouter,
         Local
+    }
+
+    /// <summary>
+    /// Interface for API key storage abstraction.
+    /// </summary>
+    public interface IApiKeyStorage
+    {
+        string GetApiKey(string keyName);
+        void SetApiKey(string keyName, string value);
+    }
+
+    /// <summary>
+    /// Default implementation using EditorPrefs (not secure).
+    /// </summary>
+    public class DefaultEditorPrefsApiKeyStorage : IApiKeyStorage
+    {
+        public string GetApiKey(string keyName) => EditorPrefs.GetString(keyName, "");
+        public void SetApiKey(string keyName, string value) => EditorPrefs.SetString(keyName, value);
     }
 
     /// <summary>
@@ -28,6 +48,7 @@ namespace Bifrost.Editor.UI
         private const string GLOBAL_USE_KEY = "Bifrost_UseGlobalSettings";
         private Bifrost.Editor.BifrostAgent testAgent;
         private bool isTestingConnection = false;
+        private IApiKeyStorage apiKeyStorage = new DefaultEditorPrefsApiKeyStorage();
 
         [Serializable]
         public class CustomHeader
@@ -78,7 +99,7 @@ namespace Bifrost.Editor.UI
             provider = (BifrostProvider)EditorGUILayout.EnumPopup("Provider", provider);
             EditorPrefs.SetInt("Bifrost_Global_Provider", (int)provider);
 
-            string apiKey = EditorPrefs.GetString("Bifrost_Global_ApiKey", "");
+            string apiKey = apiKeyStorage.GetApiKey("Bifrost_Global_ApiKey");
             string endpoint = EditorPrefs.GetString("Bifrost_Global_Endpoint", "https://openrouter.ai/api/v1/chat/completions");
             string model = EditorPrefs.GetString("Bifrost_Global_Model", "openrouter/auto");
             int theme = EditorPrefs.GetInt("Bifrost_Global_Theme", 0);
@@ -109,7 +130,7 @@ namespace Bifrost.Editor.UI
 
             theme = (int)(BifrostTheme)EditorGUILayout.EnumPopup("Theme", (BifrostTheme)theme);
 
-            EditorPrefs.SetString("Bifrost_Global_ApiKey", apiKey);
+            apiKeyStorage.SetApiKey("Bifrost_Global_ApiKey", apiKey);
             EditorPrefs.SetString("Bifrost_Global_Endpoint", endpoint);
             EditorPrefs.SetString("Bifrost_Global_Model", model);
             EditorPrefs.SetInt("Bifrost_Global_Theme", theme);

@@ -8,6 +8,8 @@ namespace Bifrost.Editor.UI
     /// <summary>
     /// Chat interface for the Bifrost AI Assistant Unity Editor tool.
     /// Handles message display, input, and chat history management.
+    /// - Chat history is now persisted between sessions using EditorPrefs.
+    /// - Progress indicator (spinner) is shown during long-running operations.
     /// </summary>
     public class BifrostChatUI
     {
@@ -16,6 +18,7 @@ namespace Bifrost.Editor.UI
         private const float SCROLL_BAR_WIDTH = 15f;
         private const float MESSAGE_PADDING = 10f;
         private const int MAX_HISTORY = 100;
+        private const string CHAT_HISTORY_KEY = "Bifrost_ChatHistory";
 
         private Vector2 scrollPosition;
         private string currentInput = "";
@@ -34,7 +37,9 @@ namespace Bifrost.Editor.UI
         public BifrostChatUI()
         {
             chatHistory = new List<ChatMessage>();
-            AddWelcomeMessage();
+            LoadHistory();
+            if (chatHistory.Count == 0)
+                AddWelcomeMessage();
         }
 
         private void InitializeStyles()
@@ -91,6 +96,7 @@ namespace Bifrost.Editor.UI
                     chatHistory.Clear();
                     AddWelcomeMessage();
                     OnClearChat?.Invoke();
+                    ClearPersistedHistory();
                 }
             }
 
@@ -120,6 +126,16 @@ namespace Bifrost.Editor.UI
             }
 
             GUILayout.EndScrollView();
+
+            // Progress indicator
+            if (isProcessing)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.FlexibleSpace();
+                GUILayout.Label("<b>⏳ Working...</b>", messageStyle);
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+            }
 
             // Auto-scroll to bottom when new messages arrive
             if (Event.current.type == EventType.Repaint)
@@ -225,6 +241,37 @@ namespace Bifrost.Editor.UI
             {
                 chatHistory.RemoveAt(0);
             }
+            SaveHistory();
+        }
+
+        private void SaveHistory()
+        {
+            try
+            {
+                string json = JsonUtility.ToJson(new ChatHistoryWrapper { Messages = chatHistory });
+                EditorPrefs.SetString(CHAT_HISTORY_KEY, json);
+            }
+            catch { }
+        }
+
+        private void LoadHistory()
+        {
+            try
+            {
+                string json = EditorPrefs.GetString(CHAT_HISTORY_KEY, "");
+                if (!string.IsNullOrEmpty(json))
+                {
+                    var wrapper = JsonUtility.FromJson<ChatHistoryWrapper>(json);
+                    if (wrapper != null && wrapper.Messages != null)
+                        chatHistory = wrapper.Messages;
+                }
+            }
+            catch { }
+        }
+
+        private void ClearPersistedHistory()
+        {
+            EditorPrefs.DeleteKey(CHAT_HISTORY_KEY);
         }
 
         public void SetInput(string text)
@@ -241,5 +288,11 @@ namespace Bifrost.Editor.UI
         public string Content { get; set; }
         public bool IsUser { get; set; }
         public DateTime Timestamp { get; set; }
+    }
+
+    [Serializable]
+    private class ChatHistoryWrapper
+    {
+        public List<ChatMessage> Messages;
     }
 }

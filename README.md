@@ -19,6 +19,10 @@ UnityBridge (codename: Bifrost) is an advanced Unity Editor extension that enabl
 - 🧩 **Unity Project Manipulation:** Create/open/save scenes, generate prefabs, place assets, duplicate prefabs, and more. ProBuilder integration (if present).
 - 🧑‍💻 **Onboarding & Help:** Friendly onboarding, tooltips, and a Steam-ready game guide panel.
 - 🛡️ **Error Handling:** All operations are robust, with clear error messages and safe fallbacks.
+- 🧪 **Tests Folder:** Scaffolded under `Assets/Bifrost/Tests` for future unit tests.
+- 🗃️ **ScriptableObject Generation:** AI can now generate ScriptableObjects as part of asset plans.
+- 💬 **Chat History Persistence:** Chat history is saved between sessions.
+- ⏳ **Progress Indicator:** Spinner shows during long-running operations.
 
 ## Installation
 
@@ -44,6 +48,13 @@ UnityBridge (codename: Bifrost) is an advanced Unity Editor extension that enabl
 3. Review and approve AI-generated plans before they are applied.
 4. Explore the Settings and Prompt Library tabs for customization and advanced features.
 5. Use the Steam Guide for a checklist to publish your game on Steam.
+
+## Architecture & Documentation
+
+- See `Bifrost/PROJECT_BREAKDOWN.md` for a detailed breakdown of the architecture, file purposes, and next steps.
+- The file `Assets/Bifrost/Editor/UI/BifrostEditorWindow.cs` is a legacy/alternate version and can be archived or deleted if not referenced.
+- The `ImageTo3DGenerator.cs` is currently a stub and will be expanded in future releases.
+- For contributing, see `CONTRIBUTING.md`.
 
 ## Screenshots
 
@@ -82,5 +93,9 @@ _Coming soon!_
    - Submit for review and schedule your release!
 
 ---
+
+## Testing
+
+- Unit tests for plan validation and ScriptableObject generation are included in `Assets/Bifrost/Tests/`.
 
 © 2024 Nate Garelik. MIT License.

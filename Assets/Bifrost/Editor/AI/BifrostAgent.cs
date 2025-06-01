@@ -12,11 +12,13 @@ namespace Bifrost.Editor
         private IBifrostLLMProvider provider;
         private PromptTemplateManager promptManager;
         private UnityContextAnalyzer contextAnalyzer;
+        private Bifrost.Editor.UI.IApiKeyStorage apiKeyStorage;
 
-        public BifrostAgent(PromptTemplateManager promptManager, UnityContextAnalyzer contextAnalyzer)
+        public BifrostAgent(PromptTemplateManager promptManager, UnityContextAnalyzer contextAnalyzer, Bifrost.Editor.UI.IApiKeyStorage apiKeyStorage = null)
         {
             this.promptManager = promptManager;
             this.contextAnalyzer = contextAnalyzer;
+            this.apiKeyStorage = apiKeyStorage ?? new Bifrost.Editor.UI.DefaultEditorPrefsApiKeyStorage();
         }
 
         private void GetProviderSettings(out BifrostProvider providerType, out string apiKey, out string endpoint, out string model)
@@ -25,7 +27,7 @@ namespace Bifrost.Editor
             if (useGlobal)
             {
                 providerType = (BifrostProvider)UnityEditor.EditorPrefs.GetInt("Bifrost_Global_Provider", (int)BifrostProvider.OpenRouter);
-                apiKey = UnityEditor.EditorPrefs.GetString("Bifrost_Global_ApiKey", "");
+                apiKey = apiKeyStorage.GetApiKey("Bifrost_Global_ApiKey");
                 endpoint = UnityEditor.EditorPrefs.GetString("Bifrost_Global_Endpoint", "https://openrouter.ai/api/v1/chat/completions");
                 model = UnityEditor.EditorPrefs.GetString("Bifrost_Global_Model", "openrouter/auto");
             }

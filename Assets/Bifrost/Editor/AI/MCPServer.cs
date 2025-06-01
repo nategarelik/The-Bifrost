@@ -1,21 +1,17 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Net.WebSockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEditor;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using WebSocketSharp;
+using WebSocketSharp.Server;
 
 namespace Bifrost.Editor.AI
 {
     public class MCPServer
     {
-        private HttpListener httpListener;
-        private CancellationTokenSource cancellationTokenSource;
+        private WebSocketServer webSocketServer;
         private bool isRunning = false;
         private int port;
         private int requestTimeout;
@@ -39,17 +35,21 @@ namespace Bifrost.Editor.AI
 
             try
             {
-                httpListener = new HttpListener();
-                httpListener.Prefixes.Add($"http://localhost:{port}/");
-                httpListener.Start();
+                webSocketServer = new WebSocketServer(port);
 
-                cancellationTokenSource = new CancellationTokenSource();
+                // Add the MCP behavior service
+                webSocketServer.AddWebSocketService<MCPBehavior>("/", behavior =>
+                {
+                    behavior.OnClientConnected = OnClientConnected;
+                    behavior.OnClientDisconnected = OnClientDisconnected;
+                    behavior.OnError = OnError;
+                    behavior.OnLog = OnLog;
+                });
+
+                webSocketServer.Start();
                 isRunning = true;
 
-                OnLog?.Invoke($"MCP Server started on http://localhost:{port}");
-
-                // Start listening for WebSocket connections
-                Task.Run(() => AcceptWebSocketConnectionsAsync(cancellationTokenSource.Token));
+                OnLog?.Invoke($"WebSocket-Sharp MCP Server started on ws://localhost:{port}");
             }
             catch (Exception ex)
             {
@@ -64,111 +64,49 @@ namespace Bifrost.Editor.AI
 
             try
             {
-                cancellationTokenSource?.Cancel();
-                httpListener?.Stop();
+                webSocketServer?.Stop();
+                webSocketServer = null;
                 isRunning = false;
-                OnLog?.Invoke("MCP Server stopped");
+                OnLog?.Invoke("WebSocket-Sharp MCP Server stopped");
             }
             catch (Exception ex)
             {
                 OnError?.Invoke($"Error stopping MCP server: {ex.Message}");
             }
         }
+    }
 
-        private async Task AcceptWebSocketConnectionsAsync(CancellationToken cancellationToken)
+    public class MCPBehavior : WebSocketBehavior
+    {
+        public Action<string> OnClientConnected;
+        public Action<string> OnClientDisconnected;
+        public Action<string> OnError;
+        public Action<string> OnLog;
+
+        protected override void OnOpen()
         {
-            while (!cancellationToken.IsCancellationRequested && httpListener.IsListening)
-            {
-                try
-                {
-                    HttpListenerContext context = await httpListener.GetContextAsync();
-
-                    if (context.Request.IsWebSocketRequest)
-                    {
-                        ProcessWebSocketRequest(context, cancellationToken);
-                    }
-                    else
-                    {
-                        context.Response.StatusCode = 400;
-                        context.Response.Close();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    if (!cancellationToken.IsCancellationRequested)
-                    {
-                        OnError?.Invoke($"Error accepting connections: {ex.Message}");
-                    }
-                }
-            }
+            OnClientConnected?.Invoke(ID);
+            OnLog?.Invoke($"MCP Client connected: {ID}");
         }
 
-        private async void ProcessWebSocketRequest(HttpListenerContext context, CancellationToken cancellationToken)
+        protected override void OnClose(CloseEventArgs e)
         {
-            WebSocketContext webSocketContext = null;
-            WebSocket webSocket = null;
-
-            try
-            {
-                webSocketContext = await context.AcceptWebSocketAsync(null);
-                webSocket = webSocketContext.WebSocket;
-
-                string clientId = Guid.NewGuid().ToString();
-                OnClientConnected?.Invoke(clientId);
-                OnLog?.Invoke($"Client connected: {clientId}");
-
-                await HandleWebSocketConnection(webSocket, clientId, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                OnError?.Invoke($"WebSocket error: {ex.Message}");
-            }
-            finally
-            {
-                if (webSocket != null && webSocket.State == WebSocketState.Open)
-                {
-                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Connection closed", CancellationToken.None);
-                }
-            }
+            OnClientDisconnected?.Invoke(ID);
+            OnLog?.Invoke($"MCP Client disconnected: {ID} - {e.Reason}");
         }
 
-        private async Task HandleWebSocketConnection(WebSocket webSocket, string clientId, CancellationToken cancellationToken)
+        protected override void OnError(ErrorEventArgs e)
         {
-            var buffer = new byte[4096];
-
-            try
-            {
-                while (webSocket.State == WebSocketState.Open && !cancellationToken.IsCancellationRequested)
-                {
-                    WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
-
-                    if (result.MessageType == WebSocketMessageType.Text)
-                    {
-                        string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                        await ProcessMCPMessage(webSocket, message, clientId);
-                    }
-                    else if (result.MessageType == WebSocketMessageType.Close)
-                    {
-                        OnClientDisconnected?.Invoke(clientId);
-                        OnLog?.Invoke($"Client disconnected: {clientId}");
-                        break;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                OnError?.Invoke($"Connection error with {clientId}: {ex.Message}");
-                OnClientDisconnected?.Invoke(clientId);
-            }
+            OnError?.Invoke($"WebSocket error with client {ID}: {e.Message}");
         }
 
-        private async Task ProcessMCPMessage(WebSocket webSocket, string message, string clientId)
+        protected override void OnMessage(MessageEventArgs e)
         {
             try
             {
-                OnLog?.Invoke($"Received from {clientId}: {message}");
+                OnLog?.Invoke($"Received from {ID}: {e.Data}");
 
-                JObject request = JObject.Parse(message);
+                JObject request = JObject.Parse(e.Data);
                 string method = request["method"]?.ToString();
                 JToken paramsObj = request["params"];
                 string id = request["id"]?.ToString();
@@ -180,23 +118,23 @@ namespace Bifrost.Editor.AI
                 switch (method)
                 {
                     case "initialize":
-                        response["result"] = await HandleInitialize(paramsObj);
+                        response["result"] = HandleInitialize(paramsObj);
                         break;
 
                     case "tools/list":
-                        response["result"] = await HandleToolsList();
+                        response["result"] = HandleToolsList();
                         break;
 
                     case "tools/call":
-                        response["result"] = await HandleToolCall(paramsObj);
+                        response["result"] = HandleToolCall(paramsObj);
                         break;
 
                     case "resources/list":
-                        response["result"] = await HandleResourcesList();
+                        response["result"] = HandleResourcesList();
                         break;
 
                     case "resources/read":
-                        response["result"] = await HandleResourceRead(paramsObj);
+                        response["result"] = HandleResourceRead(paramsObj);
                         break;
 
                     default:
@@ -209,19 +147,30 @@ namespace Bifrost.Editor.AI
                 }
 
                 string responseJson = response.ToString();
-                byte[] responseBytes = Encoding.UTF8.GetBytes(responseJson);
-                await webSocket.SendAsync(new ArraySegment<byte>(responseBytes), WebSocketMessageType.Text, true, CancellationToken.None);
+                Send(responseJson);
+                OnLog?.Invoke($"Sent to {ID}: {responseJson}");
             }
             catch (Exception ex)
             {
-                OnError?.Invoke($"Error processing message: {ex.Message}");
+                OnError?.Invoke($"Error processing message from {ID}: {ex.Message}");
+
+                // Send error response
+                JObject errorResponse = new JObject
+                {
+                    ["jsonrpc"] = "2.0",
+                    ["id"] = null,
+                    ["error"] = new JObject
+                    {
+                        ["code"] = -32603,
+                        ["message"] = $"Internal error: {ex.Message}"
+                    }
+                };
+                Send(errorResponse.ToString());
             }
         }
 
-        private async Task<JObject> HandleInitialize(JToken paramsObj)
+        private JObject HandleInitialize(JToken paramsObj)
         {
-            await Task.CompletedTask; // Make it async
-
             return new JObject
             {
                 ["protocolVersion"] = "2024-11-05",
@@ -238,13 +187,11 @@ namespace Bifrost.Editor.AI
             };
         }
 
-        private async Task<JObject> HandleToolsList()
+        private JObject HandleToolsList()
         {
-            await Task.CompletedTask; // Make it async
-
             var tools = new JArray();
 
-            // Add basic Unity tools
+            // Execute menu items
             tools.Add(new JObject
             {
                 ["name"] = "execute_menu_item",
@@ -264,6 +211,7 @@ namespace Bifrost.Editor.AI
                 }
             });
 
+            // Select GameObjects
             tools.Add(new JObject
             {
                 ["name"] = "select_gameobject",
@@ -283,6 +231,43 @@ namespace Bifrost.Editor.AI
                 }
             });
 
+            // Create GameObjects
+            tools.Add(new JObject
+            {
+                ["name"] = "create_gameobject",
+                ["description"] = "Create new GameObjects in the scene",
+                ["inputSchema"] = new JObject
+                {
+                    ["type"] = "object",
+                    ["properties"] = new JObject
+                    {
+                        ["name"] = new JObject
+                        {
+                            ["type"] = "string",
+                            ["description"] = "Name of the GameObject"
+                        },
+                        ["primitiveType"] = new JObject
+                        {
+                            ["type"] = "string",
+                            ["enum"] = new JArray { "Cube", "Sphere", "Capsule", "Cylinder", "Plane", "Quad" },
+                            ["description"] = "Type of primitive to create"
+                        },
+                        ["position"] = new JObject
+                        {
+                            ["type"] = "object",
+                            ["properties"] = new JObject
+                            {
+                                ["x"] = new JObject { ["type"] = "number" },
+                                ["y"] = new JObject { ["type"] = "number" },
+                                ["z"] = new JObject { ["type"] = "number" }
+                            }
+                        }
+                    },
+                    ["required"] = new JArray { "name" }
+                }
+            });
+
+            // Console logging
             tools.Add(new JObject
             {
                 ["name"] = "send_console_log",
@@ -314,10 +299,8 @@ namespace Bifrost.Editor.AI
             };
         }
 
-        private async Task<JObject> HandleToolCall(JToken paramsObj)
+        private JObject HandleToolCall(JToken paramsObj)
         {
-            await Task.CompletedTask; // Make it async
-
             string toolName = paramsObj["name"]?.ToString();
             JObject arguments = paramsObj["arguments"] as JObject;
 
@@ -326,13 +309,16 @@ namespace Bifrost.Editor.AI
                 switch (toolName)
                 {
                     case "execute_menu_item":
-                        return await ExecuteMenuItem(arguments);
+                        return ExecuteMenuItem(arguments);
 
                     case "select_gameobject":
-                        return await SelectGameObject(arguments);
+                        return SelectGameObject(arguments);
+
+                    case "create_gameobject":
+                        return CreateGameObject(arguments);
 
                     case "send_console_log":
-                        return await SendConsoleLog(arguments);
+                        return SendConsoleLog(arguments);
 
                     default:
                         return new JObject
@@ -364,10 +350,8 @@ namespace Bifrost.Editor.AI
             }
         }
 
-        private async Task<JObject> ExecuteMenuItem(JObject arguments)
+        private JObject ExecuteMenuItem(JObject arguments)
         {
-            await Task.CompletedTask; // Make it async
-
             string menuPath = arguments["menuPath"]?.ToString();
 
             if (string.IsNullOrEmpty(menuPath))
@@ -375,16 +359,21 @@ namespace Bifrost.Editor.AI
                 throw new ArgumentException("menuPath is required");
             }
 
-            // Execute on main thread
+            bool success = false;
+            string result = "";
+
             EditorApplication.delayCall += () =>
             {
                 try
                 {
                     EditorApplication.ExecuteMenuItem(menuPath);
+                    success = true;
+                    result = $"Successfully executed menu item: {menuPath}";
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"Failed to execute menu item '{menuPath}': {ex.Message}");
+                    result = $"Failed to execute menu item '{menuPath}': {ex.Message}";
+                    Debug.LogError(result);
                 }
             };
 
@@ -395,16 +384,14 @@ namespace Bifrost.Editor.AI
                     new JObject
                     {
                         ["type"] = "text",
-                        ["text"] = $"Executed menu item: {menuPath}"
+                        ["text"] = $"Queued menu item execution: {menuPath}"
                     }
                 }
             };
         }
 
-        private async Task<JObject> SelectGameObject(JObject arguments)
+        private JObject SelectGameObject(JObject arguments)
         {
-            await Task.CompletedTask; // Make it async
-
             string objectPath = arguments["objectPath"]?.ToString();
 
             if (string.IsNullOrEmpty(objectPath))
@@ -430,16 +417,71 @@ namespace Bifrost.Editor.AI
                     new JObject
                     {
                         ["type"] = "text",
-                        ["text"] = found != null ? $"Selected GameObject: {objectPath}" : $"GameObject not found: {objectPath}"
+                        ["text"] = $"Queued selection of GameObject: {objectPath}"
                     }
                 }
             };
         }
 
-        private async Task<JObject> SendConsoleLog(JObject arguments)
+        private JObject CreateGameObject(JObject arguments)
         {
-            await Task.CompletedTask; // Make it async
+            string name = arguments["name"]?.ToString();
+            string primitiveType = arguments["primitiveType"]?.ToString() ?? "Cube";
 
+            if (string.IsNullOrEmpty(name))
+            {
+                throw new ArgumentException("name is required");
+            }
+
+            EditorApplication.delayCall += () =>
+            {
+                try
+                {
+                    GameObject go;
+                    if (Enum.TryParse<PrimitiveType>(primitiveType, out PrimitiveType primitive))
+                    {
+                        go = GameObject.CreatePrimitive(primitive);
+                    }
+                    else
+                    {
+                        go = new GameObject();
+                    }
+
+                    go.name = name;
+
+                    // Set position if provided
+                    if (arguments["position"] is JObject posObj)
+                    {
+                        float x = posObj["x"]?.ToObject<float>() ?? 0f;
+                        float y = posObj["y"]?.ToObject<float>() ?? 0f;
+                        float z = posObj["z"]?.ToObject<float>() ?? 0f;
+                        go.transform.position = new Vector3(x, y, z);
+                    }
+
+                    Undo.RegisterCreatedObjectUndo(go, $"Create {name}");
+                    Selection.activeGameObject = go;
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"Failed to create GameObject '{name}': {ex.Message}");
+                }
+            };
+
+            return new JObject
+            {
+                ["content"] = new JArray
+                {
+                    new JObject
+                    {
+                        ["type"] = "text",
+                        ["text"] = $"Queued creation of GameObject: {name} ({primitiveType})"
+                    }
+                }
+            };
+        }
+
+        private JObject SendConsoleLog(JObject arguments)
+        {
             string message = arguments["message"]?.ToString();
             string logType = arguments["logType"]?.ToString() ?? "Log";
 
@@ -477,10 +519,8 @@ namespace Bifrost.Editor.AI
             };
         }
 
-        private async Task<JObject> HandleResourcesList()
+        private JObject HandleResourcesList()
         {
-            await Task.CompletedTask; // Make it async
-
             var resources = new JArray();
 
             resources.Add(new JObject
@@ -497,16 +537,21 @@ namespace Bifrost.Editor.AI
                 ["description"] = "Unity console log messages"
             });
 
+            resources.Add(new JObject
+            {
+                ["uri"] = "unity://selection",
+                ["name"] = "Current Selection",
+                ["description"] = "Currently selected objects in Unity"
+            });
+
             return new JObject
             {
                 ["resources"] = resources
             };
         }
 
-        private async Task<JObject> HandleResourceRead(JToken paramsObj)
+        private JObject HandleResourceRead(JToken paramsObj)
         {
-            await Task.CompletedTask; // Make it async
-
             string uri = paramsObj["uri"]?.ToString();
 
             switch (uri)
@@ -517,6 +562,9 @@ namespace Bifrost.Editor.AI
                 case "unity://console-logs":
                     return GetConsoleLogs();
 
+                case "unity://selection":
+                    return GetCurrentSelection();
+
                 default:
                     throw new ArgumentException($"Unknown resource URI: {uri}");
             }
@@ -526,7 +574,6 @@ namespace Bifrost.Editor.AI
         {
             var hierarchy = new JArray();
 
-            // Get all root GameObjects in the current scene
             var rootObjects = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
 
             foreach (var rootObj in rootObjects)
@@ -541,7 +588,7 @@ namespace Bifrost.Editor.AI
                     new JObject
                     {
                         ["type"] = "text",
-                        ["text"] = $"Scene Hierarchy:\n{hierarchy.ToString(Formatting.Indented)}"
+                        ["text"] = $"Unity Scene Hierarchy:\n{hierarchy.ToString(Formatting.Indented)}"
                     }
                 }
             };
@@ -554,7 +601,13 @@ namespace Bifrost.Editor.AI
                 ["name"] = obj.name,
                 ["active"] = obj.activeInHierarchy,
                 ["tag"] = obj.tag,
-                ["layer"] = obj.layer
+                ["layer"] = obj.layer,
+                ["position"] = new JObject
+                {
+                    ["x"] = obj.transform.position.x,
+                    ["y"] = obj.transform.position.y,
+                    ["z"] = obj.transform.position.z
+                }
             };
 
             if (obj.transform.childCount > 0)
@@ -579,7 +632,29 @@ namespace Bifrost.Editor.AI
                     new JObject
                     {
                         ["type"] = "text",
-                        ["text"] = "Console logs would be retrieved here. This requires additional implementation to capture Unity console messages."
+                        ["text"] = "Unity Console logs: Access via Unity Console window. Real-time log capture requires additional implementation."
+                    }
+                }
+            };
+        }
+
+        private JObject GetCurrentSelection()
+        {
+            var selection = new JArray();
+
+            foreach (var obj in Selection.gameObjects)
+            {
+                selection.Add(GetGameObjectData(obj));
+            }
+
+            return new JObject
+            {
+                ["contents"] = new JArray
+                {
+                    new JObject
+                    {
+                        ["type"] = "text",
+                        ["text"] = $"Current Unity Selection:\n{selection.ToString(Formatting.Indented)}"
                     }
                 }
             };

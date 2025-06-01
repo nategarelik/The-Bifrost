@@ -305,29 +305,26 @@ namespace Bifrost.Editor.UI
                 GameObject go = GameObject.CreatePrimitive(primitiveType);
                 go.name = objectName;
 
-                // Extract and apply position if specified in this step
+                // Extract and apply position - ALWAYS try to extract position
                 Vector3 position = ExtractPositionFromStep(step);
-                if (position != Vector3.zero || step.ToLower().Contains("position"))
-                {
-                    go.transform.position = position;
-                }
+                go.transform.position = position; // Apply the position even if it's Vector3.zero
 
                 // Extract and apply scale if specified in this step
                 Vector3 scale = ExtractScaleFromStep(step);
-                if (scale != Vector3.one || step.ToLower().Contains("scale"))
+                if (scale != Vector3.one)
                 {
                     go.transform.localScale = scale;
                 }
 
                 // Extract and apply rotation if specified in this step
                 Vector3 rotation = ExtractRotationFromStep(step);
-                if (rotation != Vector3.zero || step.ToLower().Contains("rotate"))
+                if (rotation != Vector3.zero)
                 {
                     go.transform.rotation = Quaternion.Euler(rotation);
                 }
 
                 createdObjects[objectName] = go;
-                LogToPanel($"Created GameObject: {objectName} ({primitiveType}) at {position}");
+                LogToPanel($"Created GameObject: {objectName} ({primitiveType}) at {position} with scale {scale}");
 
                 // Register undo
                 Undo.RegisterCreatedObjectUndo(go, $"Create {objectName}");
@@ -491,17 +488,32 @@ namespace Bifrost.Editor.UI
 
         private Vector3 ExtractPositionFromStep(string step)
         {
-            // Look for patterns like "Position it at (0, 0, 0)" or "at (x, y, z)"
-            var match = System.Text.RegularExpressions.Regex.Match(step, @"(?:position|at)\s*\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-            if (match.Success)
+            // Look for patterns like "Position it at (0, 0, 0)" or "at (x, y, z)" with more flexible spacing and decimal support
+            var patterns = new string[]
             {
-                if (float.TryParse(match.Groups[1].Value, out float x) &&
-                    float.TryParse(match.Groups[2].Value, out float y) &&
-                    float.TryParse(match.Groups[3].Value, out float z))
+                @"position\s+it\s+at\s*\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)",
+                @"position.*?at\s*\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)",
+                @"\bat\s*\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)",
+                @"\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)"
+            };
+
+            foreach (var pattern in patterns)
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(step, pattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (match.Success)
                 {
-                    return new Vector3(x, y, z);
+                    if (float.TryParse(match.Groups[1].Value, out float x) &&
+                        float.TryParse(match.Groups[2].Value, out float y) &&
+                        float.TryParse(match.Groups[3].Value, out float z))
+                    {
+                        Vector3 position = new Vector3(x, y, z);
+                        LogToPanel($"Extracted position: {position} from step: {step.Substring(0, Math.Min(60, step.Length))}...");
+                        return position;
+                    }
                 }
             }
+
+            LogToPanel($"No position found in step: {step.Substring(0, Math.Min(60, step.Length))}...");
             return Vector3.zero;
         }
 

@@ -507,13 +507,13 @@ namespace Bifrost.Editor.UI
                         float.TryParse(match.Groups[3].Value, out float z))
                     {
                         Vector3 position = new Vector3(x, y, z);
-                        LogToPanel($"Extracted position: {position} from step: {step.Substring(0, Math.Min(60, step.Length))}...");
+                        LogToPanel($"Extracted position: {position} from step: {step.Substring(0, Mathf.Min(60, step.Length))}...");
                         return position;
                     }
                 }
             }
 
-            LogToPanel($"No position found in step: {step.Substring(0, Math.Min(60, step.Length))}...");
+            LogToPanel($"No position found in step: {step.Substring(0, Mathf.Min(60, step.Length))}...");
             return Vector3.zero;
         }
 

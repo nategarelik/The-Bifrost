@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
+using Bifrost.Editor.Settings;
 
 namespace Bifrost.Editor.UI
 {
@@ -24,7 +25,7 @@ namespace Bifrost.Editor.UI
 
         public static BifrostModeLibrary GetOrCreateLibrary()
         {
-            Bifrost.Editor.UI.BifrostSettingsUI.EnsureBifrostResourcesFolder();
+            Bifrost.Editor.Settings.BifrostSettingsUI.EnsureBifrostResourcesFolder();
             var library = AssetDatabase.LoadAssetAtPath<BifrostModeLibrary>(LIBRARY_PATH);
             if (library == null)
             {

@@ -82,7 +82,7 @@ namespace Bifrost.Editor.AI
                     string key = UnityEditor.EditorPrefs.GetString($"Bifrost_Global_CustomHeaderKey_{i}", "");
                     string value = UnityEditor.EditorPrefs.GetString($"Bifrost_Global_CustomHeaderValue_{i}", "");
                     if (!string.IsNullOrEmpty(key))
-                        options.customHeaders.Add(new UI.BifrostSettingsUI.CustomHeader { key = key, value = value });
+                        options.customHeaders.Add(new BifrostSettingsUI.CustomHeader { key = key, value = value });
                 }
             }
             else

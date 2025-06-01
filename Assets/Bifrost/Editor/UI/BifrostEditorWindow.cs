@@ -22,8 +22,8 @@ namespace Bifrost.Editor.UI
         private BifrostPromptLibraryUI promptLibraryUI;
         [SerializeField] private bool showSteamGuide = false;
         private PromptTemplateManager promptManager;
-        private enum Tab { Chat, Settings, Modes, PromptLibrary, Debug }
-        [SerializeField] private Tab currentTab = Tab.Chat;
+        private enum Tab { MCP, Chat, Settings, Modes, PromptLibrary, Debug }
+        [SerializeField] private Tab currentTab = Tab.MCP;
         private string errorMessage = null;
         private BifrostSettingsUI settingsUI;
         private BifrostModeEditor modeEditor;
@@ -38,6 +38,15 @@ namespace Bifrost.Editor.UI
         private UnityProjectManager projectManager;
         private LLMGameSystemPlan currentPlan;
         [SerializeField] private bool awaitingApproval = false;
+
+        // MCP Server fields
+        [SerializeField] private bool mcpServerRunning = false;
+        [SerializeField] private int mcpServerPort = 8090;
+        [SerializeField] private int mcpRequestTimeout = 10;
+        private const string MCP_PORT_KEY = "Bifrost_MCP_Port";
+        private const string MCP_TIMEOUT_KEY = "Bifrost_MCP_Timeout";
+        private MCPServer mcpServer;
+        [SerializeField] private List<string> connectedClients = new List<string>();
 
         [MenuItem("Window/Bifrost AI Assistant")]
         public static void ShowWindow()
@@ -75,6 +84,10 @@ namespace Bifrost.Editor.UI
         {
             // Restore selected mode
             selectedMode = EditorPrefs.GetString(SELECTED_MODE_KEY, "GameDev");
+
+            // Restore MCP server settings
+            mcpServerPort = EditorPrefs.GetInt(MCP_PORT_KEY, 8090);
+            mcpRequestTimeout = EditorPrefs.GetInt(MCP_TIMEOUT_KEY, 10);
 
             // Restore approval state
             awaitingApproval = EditorPrefs.GetBool(AWAITING_APPROVAL_KEY, false);
@@ -637,6 +650,9 @@ namespace Bifrost.Editor.UI
 
             switch (currentTab)
             {
+                case Tab.MCP:
+                    DrawMCPTab();
+                    break;
                 case Tab.Chat:
                     if (chatUI != null) DrawChatTab();
                     break;
@@ -658,6 +674,7 @@ namespace Bifrost.Editor.UI
         private void DrawTabs()
         {
             EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Toggle(currentTab == Tab.MCP, new GUIContent("MCP Server", "Configure external MCP connections"), EditorStyles.toolbarButton)) currentTab = Tab.MCP;
             if (GUILayout.Toggle(currentTab == Tab.Chat, new GUIContent("Chat", "Chat with the AI assistant"), EditorStyles.toolbarButton)) currentTab = Tab.Chat;
             if (GUILayout.Toggle(currentTab == Tab.Settings, new GUIContent("Settings", "Configure LLM and tool options"), EditorStyles.toolbarButton)) currentTab = Tab.Settings;
             if (GUILayout.Toggle(currentTab == Tab.Modes, new GUIContent("Modes", "Switch between Bifrost modes"), EditorStyles.toolbarButton)) currentTab = Tab.Modes;
@@ -756,6 +773,298 @@ namespace Bifrost.Editor.UI
             if (GUILayout.Button("Clear Log"))
             {
                 logMessages.Clear();
+            }
+        }
+
+        private void DrawMCPTab()
+        {
+            EditorGUILayout.LabelField("🔌 MCP Server Configuration", EditorStyles.boldLabel);
+            EditorGUILayout.Space();
+
+            // Server Status Section
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField("Server Status", EditorStyles.boldLabel);
+
+            string statusText = mcpServerRunning ? "✅ Running" : "❌ Stopped";
+            Color originalColor = GUI.color;
+            GUI.color = mcpServerRunning ? Color.green : Color.red;
+            EditorGUILayout.LabelField($"Status: {statusText}");
+            GUI.color = originalColor;
+
+            if (mcpServerRunning)
+            {
+                EditorGUILayout.LabelField($"Port: {mcpServerPort}");
+                EditorGUILayout.LabelField($"WebSocket URL: ws://localhost:{mcpServerPort}");
+                EditorGUILayout.LabelField($"Connected Clients: {connectedClients.Count}");
+
+                if (connectedClients.Count > 0)
+                {
+                    EditorGUILayout.LabelField("Client IDs:", EditorStyles.boldLabel);
+                    foreach (string clientId in connectedClients)
+                    {
+                        EditorGUILayout.LabelField($"  • {clientId.Substring(0, 8)}...");
+                    }
+                }
+            }
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.Space();
+
+            // Configuration Section
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField("Server Configuration", EditorStyles.boldLabel);
+
+            // Port Configuration
+            EditorGUI.BeginChangeCheck();
+            int newPort = EditorGUILayout.IntField("WebSocket Port", mcpServerPort);
+            if (EditorGUI.EndChangeCheck())
+            {
+                mcpServerPort = Mathf.Clamp(newPort, 1024, 65535);
+                EditorPrefs.SetInt(MCP_PORT_KEY, mcpServerPort);
+                LogToPanel($"MCP Server port changed to: {mcpServerPort}");
+            }
+
+            // Timeout Configuration
+            EditorGUI.BeginChangeCheck();
+            int newTimeout = EditorGUILayout.IntField("Request Timeout (seconds)", mcpRequestTimeout);
+            if (EditorGUI.EndChangeCheck())
+            {
+                mcpRequestTimeout = Mathf.Clamp(newTimeout, 5, 120);
+                EditorPrefs.SetInt(MCP_TIMEOUT_KEY, mcpRequestTimeout);
+                LogToPanel($"MCP Server timeout changed to: {mcpRequestTimeout}s");
+            }
+
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.Space();
+
+            // Server Control Section
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField("Server Control", EditorStyles.boldLabel);
+
+            EditorGUILayout.BeginHorizontal();
+            if (!mcpServerRunning)
+            {
+                if (GUILayout.Button("🚀 Start MCP Server", GUILayout.Height(30)))
+                {
+                    StartMCPServer();
+                }
+            }
+            else
+            {
+                if (GUILayout.Button("🛑 Stop MCP Server", GUILayout.Height(30)))
+                {
+                    StopMCPServer();
+                }
+            }
+
+            if (GUILayout.Button("🔄 Restart Server", GUILayout.Height(30)))
+            {
+                RestartMCPServer();
+            }
+            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.Space();
+
+            // Client Configuration Section
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField("🤖 AI Client Configuration", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Configure your AI tools to connect to Bifrost:", EditorStyles.wordWrappedLabel);
+            EditorGUILayout.Space();
+
+            // Claude Desktop Configuration
+            if (GUILayout.Button("📋 Copy Claude Desktop Config"))
+            {
+                CopyClaudeConfig();
+            }
+
+            EditorGUILayout.Space();
+
+            // Cursor/Windsurf Configuration  
+            if (GUILayout.Button("📋 Copy Cursor/Windsurf Config"))
+            {
+                CopyCursorConfig();
+            }
+
+            EditorGUILayout.Space();
+
+            // Manual Configuration
+            EditorGUILayout.LabelField("Manual Configuration:", EditorStyles.boldLabel);
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.SelectableLabel($"WebSocket URL: ws://localhost:{mcpServerPort}", EditorStyles.textField);
+            EditorGUILayout.SelectableLabel($"Protocol: MCP over WebSocket", EditorStyles.textField);
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.Space();
+
+            // Available Tools Section
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField("🔧 Available MCP Tools", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("External AI tools can use these functions:", EditorStyles.wordWrappedLabel);
+
+            string[] tools = {
+                "• execute_menu_item - Execute Unity menu commands",
+                "• select_gameobject - Select objects in hierarchy",
+                "• update_gameobject - Modify GameObject properties",
+                "• update_component - Add/modify components",
+                "• add_package - Install Unity packages",
+                "• run_tests - Execute Unity tests",
+                "• send_console_log - Send messages to Unity console",
+                "• add_asset_to_scene - Add prefabs/assets to scene"
+            };
+
+            foreach (string tool in tools)
+            {
+                EditorGUILayout.LabelField(tool, EditorStyles.wordWrappedLabel);
+            }
+            EditorGUILayout.EndVertical();
+        }
+
+        private async void StartMCPServer()
+        {
+            if (mcpServer != null && mcpServer.IsRunning)
+            {
+                LogToPanel("MCP Server is already running");
+                return;
+            }
+
+            try
+            {
+                mcpServer = new MCPServer(mcpServerPort, mcpRequestTimeout);
+
+                // Subscribe to events
+                mcpServer.OnLog += LogToPanel;
+                mcpServer.OnError += (error) =>
+                {
+                    LogToPanel($"MCP Error: {error}");
+                    errorMessage = error;
+                };
+                mcpServer.OnClientConnected += (clientId) =>
+                {
+                    connectedClients.Add(clientId);
+                    LogToPanel($"MCP Client connected: {clientId}");
+                };
+                mcpServer.OnClientDisconnected += (clientId) =>
+                {
+                    connectedClients.Remove(clientId);
+                    LogToPanel($"MCP Client disconnected: {clientId}");
+                };
+
+                await mcpServer.StartAsync();
+                mcpServerRunning = mcpServer.IsRunning;
+
+                if (mcpServerRunning)
+                {
+                    LogToPanel($"✅ MCP Server started successfully on port {mcpServerPort}");
+                    errorMessage = null;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                errorMessage = $"Failed to start MCP Server: {ex.Message}";
+                LogToPanel(errorMessage);
+                mcpServerRunning = false;
+            }
+        }
+
+        private void StopMCPServer()
+        {
+            if (mcpServer != null)
+            {
+                try
+                {
+                    mcpServer.Stop();
+                    mcpServerRunning = false;
+                    connectedClients.Clear();
+                    LogToPanel("🛑 MCP Server stopped");
+
+                    // Unsubscribe from events
+                    mcpServer.OnLog -= LogToPanel;
+                    mcpServer.OnError -= (error) =>
+                    {
+                        LogToPanel($"MCP Error: {error}");
+                        errorMessage = error;
+                    };
+                    mcpServer.OnClientConnected -= (clientId) =>
+                    {
+                        connectedClients.Add(clientId);
+                        LogToPanel($"MCP Client connected: {clientId}");
+                    };
+                    mcpServer.OnClientDisconnected -= (clientId) =>
+                    {
+                        connectedClients.Remove(clientId);
+                        LogToPanel($"MCP Client disconnected: {clientId}");
+                    };
+
+                    mcpServer = null;
+                }
+                catch (System.Exception ex)
+                {
+                    LogToPanel($"Error stopping MCP Server: {ex.Message}");
+                }
+            }
+            else
+            {
+                mcpServerRunning = false;
+                LogToPanel("MCP Server was not running");
+            }
+        }
+
+        private async void RestartMCPServer()
+        {
+            StopMCPServer();
+            await Task.Delay(1000); // Give it a moment to fully stop
+            StartMCPServer();
+        }
+
+        private void CopyClaudeConfig()
+        {
+            string config = $@"{{
+  ""mcpServers"": {{
+    ""bifrost-unity"": {{
+      ""command"": ""ws://localhost:{mcpServerPort}"",
+      ""transport"": ""websocket""
+    }}
+  }}
+}}";
+            EditorGUIUtility.systemCopyBuffer = config;
+            LogToPanel("Claude Desktop configuration copied to clipboard");
+            EditorUtility.DisplayDialog("Configuration Copied",
+                "Claude Desktop configuration has been copied to your clipboard.\n\n" +
+                "Add this to your claude_desktop_config.json file:\n" +
+                "• macOS: ~/Library/Application Support/Claude/claude_desktop_config.json\n" +
+                "• Windows: %APPDATA%/Claude/claude_desktop_config.json", "OK");
+        }
+
+        private void CopyCursorConfig()
+        {
+            string config = $@"{{
+  ""mcp"": {{
+    ""servers"": {{
+      ""bifrost-unity"": {{
+        ""url"": ""ws://localhost:{mcpServerPort}"",
+        ""transport"": ""websocket""
+      }}
+    }}
+  }}
+}}";
+            EditorGUIUtility.systemCopyBuffer = config;
+            LogToPanel("Cursor/Windsurf configuration copied to clipboard");
+            EditorUtility.DisplayDialog("Configuration Copied",
+                "Cursor/Windsurf configuration has been copied to your clipboard.\n\n" +
+                "Add this to your MCP settings in your IDE.", "OK");
+        }
+
+        private void OnDestroy()
+        {
+            // Cleanup MCP server when window is destroyed
+            if (mcpServer != null && mcpServer.IsRunning)
+            {
+                LogToPanel("Cleaning up MCP Server on window close");
+                StopMCPServer();
             }
         }
     }

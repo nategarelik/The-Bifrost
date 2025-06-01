@@ -39,6 +39,7 @@ namespace Bifrost.Editor.AI
                             if (firstChoice["message"] is JObject message && message["content"] != null)
                             {
                                 contentToProcess = message["content"].ToString();
+                                Debug.Log($"Extracted content from OpenRouter response: {contentToProcess.Substring(0, Math.Min(200, contentToProcess.Length))}...");
                             }
                         }
                     }
@@ -58,14 +59,34 @@ namespace Bifrost.Editor.AI
                     {
                         // Skip past the opening ```json or ``` part
                         int jsonStart = contentToProcess.IndexOf('\n', codeBlockStart);
-                        if (jsonStart < 0) jsonStart = codeBlockStart + 3; // If no newline, assume ```{ format
-                        else jsonStart++; // Move past the newline
+                        if (jsonStart < 0)
+                        {
+                            // If no newline, check if it's ```{ format
+                            if (contentToProcess.Length > codeBlockStart + 3 && contentToProcess[codeBlockStart + 3] == '{')
+                            {
+                                jsonStart = codeBlockStart + 3;
+                            }
+                            else
+                            {
+                                jsonStart = codeBlockStart + 3; // Skip ```
+                                // Skip past "json" if present
+                                if (contentToProcess.Substring(jsonStart).StartsWith("json"))
+                                {
+                                    jsonStart += 4;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            jsonStart++; // Move past the newline
+                        }
 
                         // Find the closing ```
                         int codeBlockEnd = contentToProcess.IndexOf("```", jsonStart);
                         if (codeBlockEnd > jsonStart)
                         {
                             contentToProcess = contentToProcess.Substring(jsonStart, codeBlockEnd - jsonStart).Trim();
+                            Debug.Log($"Extracted JSON from markdown: {contentToProcess.Substring(0, Math.Min(200, contentToProcess.Length))}...");
                         }
                     }
                 }
@@ -78,20 +99,27 @@ namespace Bifrost.Editor.AI
                     if (start >= 0 && end > start)
                     {
                         string extractedJson = contentToProcess.Substring(start, end - start);
-                        // Now parse the extracted JSON
-                        plan = JsonUtility.FromJson<LLMGameSystemPlan>(extractedJson);
+                        Debug.Log($"Final JSON to parse: {extractedJson.Substring(0, Math.Min(300, extractedJson.Length))}...");
+
+                        // Use Newtonsoft.Json for more robust parsing
+                        plan = JsonConvert.DeserializeObject<LLMGameSystemPlan>(extractedJson);
                     }
                 }
                 else
                 {
                     // Try direct parsing as fallback
-                    plan = JsonUtility.FromJson<LLMGameSystemPlan>(contentToProcess);
+                    Debug.Log($"Direct parsing attempt: {contentToProcess.Substring(0, Math.Min(200, contentToProcess.Length))}...");
+                    plan = JsonConvert.DeserializeObject<LLMGameSystemPlan>(contentToProcess);
                 }
 
                 // Basic validation: must have a systemName and at least one step
                 if (plan == null || string.IsNullOrEmpty(plan.systemName) || plan.steps == null || plan.steps.Length == 0)
+                {
+                    Debug.LogWarning("Plan validation failed: missing systemName or steps");
                     return false;
+                }
 
+                Debug.Log($"Successfully parsed plan: {plan.systemName} with {plan.steps.Length} steps");
                 return true;
             }
             catch (Exception ex)

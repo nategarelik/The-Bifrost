@@ -19,6 +19,8 @@ namespace Bifrost.Editor.AI
             plan = null;
             try
             {
+                string contentToProcess = json;
+
                 // First, try to see if this is an OpenRouter response
                 if (json.Contains("\"choices\"") && (json.Contains("\"message\"") || json.Contains("\"content\"")))
                 {
@@ -36,25 +38,7 @@ namespace Bifrost.Editor.AI
                             // Extract the content from the message
                             if (firstChoice["message"] is JObject message && message["content"] != null)
                             {
-                                string content = message["content"].ToString();
-
-                                // If content contains JSON, extract it
-                                if (content.Contains("{") && content.Contains("}"))
-                                {
-                                    int start = content.IndexOf('{');
-                                    int end = content.LastIndexOf('}') + 1;
-                                    if (start >= 0 && end > start)
-                                    {
-                                        string extractedJson = content.Substring(start, end - start);
-                                        // Now parse the extracted JSON
-                                        plan = JsonUtility.FromJson<LLMGameSystemPlan>(extractedJson);
-                                    }
-                                }
-                                else
-                                {
-                                    Debug.LogError("No JSON object found in response content");
-                                    return false;
-                                }
+                                contentToProcess = message["content"].ToString();
                             }
                         }
                     }
@@ -64,10 +48,44 @@ namespace Bifrost.Editor.AI
                         return false;
                     }
                 }
+
+                // Handle markdown code blocks (```json...``` or ```...```)
+                if (contentToProcess.Contains("```"))
+                {
+                    // Find the start of the code block
+                    int codeBlockStart = contentToProcess.IndexOf("```");
+                    if (codeBlockStart >= 0)
+                    {
+                        // Skip past the opening ```json or ``` part
+                        int jsonStart = contentToProcess.IndexOf('\n', codeBlockStart);
+                        if (jsonStart < 0) jsonStart = codeBlockStart + 3; // If no newline, assume ```{ format
+                        else jsonStart++; // Move past the newline
+
+                        // Find the closing ```
+                        int codeBlockEnd = contentToProcess.IndexOf("```", jsonStart);
+                        if (codeBlockEnd > jsonStart)
+                        {
+                            contentToProcess = contentToProcess.Substring(jsonStart, codeBlockEnd - jsonStart).Trim();
+                        }
+                    }
+                }
+
+                // If content still contains JSON, extract it
+                if (contentToProcess.Contains("{") && contentToProcess.Contains("}"))
+                {
+                    int start = contentToProcess.IndexOf('{');
+                    int end = contentToProcess.LastIndexOf('}') + 1;
+                    if (start >= 0 && end > start)
+                    {
+                        string extractedJson = contentToProcess.Substring(start, end - start);
+                        // Now parse the extracted JSON
+                        plan = JsonUtility.FromJson<LLMGameSystemPlan>(extractedJson);
+                    }
+                }
                 else
                 {
                     // Try direct parsing as fallback
-                    plan = JsonUtility.FromJson<LLMGameSystemPlan>(json);
+                    plan = JsonUtility.FromJson<LLMGameSystemPlan>(contentToProcess);
                 }
 
                 // Basic validation: must have a systemName and at least one step

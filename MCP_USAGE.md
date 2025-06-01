@@ -18,6 +18,8 @@ This guide explains how to use Bifrost's Model Context Protocol (MCP) server to 
 3. Click **Start Server** (default port: 8090)
 4. Connect your AI agent to `ws://localhost:8090`
 
+> **Note**: Bifrost uses WebSocket protocol for MCP communication, ensuring compatibility with all standard MCP clients (Claude Desktop, Cursor, etc.)
+
 ## MCP Server Setup
 
 ### Starting the Server
@@ -29,14 +31,20 @@ var mcpServer = new MCPServerEnhanced(8090);
 mcpServer.Start();
 ```
 
+**Transport Protocol**: WebSocket (using websocket-sharp.dll)
+- Full-duplex communication for real-time Unity control
+- Compatible with all standard MCP clients
+- Low-latency bi-directional messaging
+
 ### Configuration Options
 
 | Setting | Default | Description |
 |---------|---------|-------------|
 | Port | 8090 | WebSocket server port |
-| Timeout | 60s | Request timeout |
+| Protocol | WebSocket | Transport protocol (ws://) |
 | Max Connections | 10 | Maximum simultaneous clients |
 | Log Level | Info | Logging verbosity |
+| Keep-Alive | 30s | WebSocket ping interval |
 
 ### Server Status
 
@@ -51,24 +59,39 @@ The MCP Control Panel shows:
 ### Claude Desktop
 
 1. Install Claude Desktop
-2. Edit config at `%APPDATA%/Claude/claude_desktop_config.json`:
+2. Edit config at:
+   - Windows: `%APPDATA%/Claude/claude_desktop_config.json`
+   - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
-    "bifrost": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-stdio", "ws://localhost:8090"]
+    "bifrost-unity": {
+      "command": "ws://localhost:8090",
+      "transport": "websocket"
     }
   }
 }
 ```
 
-### Cursor
+### Cursor / Windsurf
 
-1. Open Cursor settings
-2. Add MCP server URL: `ws://localhost:8090`
-3. Enable MCP tools in AI settings
+1. Open settings (Cursor or Windsurf)
+2. Navigate to AI/MCP configuration
+3. Add server configuration:
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "bifrost-unity": {
+        "url": "ws://localhost:8090",
+        "transport": "websocket"
+      }
+    }
+  }
+}
+```
 
 ### Custom Client
 
@@ -78,7 +101,7 @@ Connect any WebSocket client supporting MCP protocol:
 const ws = new WebSocket('ws://localhost:8090');
 
 ws.on('open', () => {
-  // Send initialization
+  // Send MCP initialization
   ws.send(JSON.stringify({
     jsonrpc: "2.0",
     id: "1",
@@ -92,7 +115,18 @@ ws.on('open', () => {
     }
   }));
 });
+
+ws.on('message', (data) => {
+  const response = JSON.parse(data);
+  // Handle MCP responses
+});
 ```
+
+**WebSocket Benefits**:
+- Real-time bidirectional communication
+- Low latency Unity control
+- Standard MCP protocol support
+- No additional dependencies for clients
 
 ## Available Tools
 

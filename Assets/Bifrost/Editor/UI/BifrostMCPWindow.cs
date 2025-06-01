@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEditor;
 using Bifrost.Editor.AI.MCP;
+using Bifrost.Editor.AI;
 using Bifrost.Editor.AI.Unity;
 using Bifrost.Editor.Settings;
 
@@ -11,7 +12,7 @@ namespace Bifrost.Editor.UI
 {
     public class BifrostMCPWindow : EditorWindow
     {
-        private MCPServerEnhanced mcpServer;
+        private SimpleMCPServer mcpServer;
         private UnityStateSynchronizer stateSynchronizer;
         private BifrostSettings settings;
         
@@ -338,7 +339,7 @@ namespace Bifrost.Editor.UI
         {
             EditorPrefs.SetInt("BifrostMCP_ServerPort", serverPort);
             
-            mcpServer = new MCPServerEnhanced(serverPort);
+            mcpServer = new SimpleMCPServer(serverPort);
             mcpServer.OnClientConnected += OnClientConnected;
             mcpServer.OnClientDisconnected += OnClientDisconnected;
             mcpServer.OnLog += OnServerLog;

@@ -4,6 +4,7 @@ using Bifrost.Editor.UI;
 using Bifrost.Editor.Settings;
 using Bifrost.Editor.Prompts;
 using Bifrost.Editor.AI;
+using Bifrost.Editor.AI.MCP;
 using Bifrost.Editor.Context;
 using Bifrost.Editor.AssetGeneration;
 using System.Threading.Tasks;
@@ -45,7 +46,7 @@ namespace Bifrost.Editor.UI
         [SerializeField] private int mcpRequestTimeout = 10;
         private const string MCP_PORT_KEY = "Bifrost_MCP_Port";
         private const string MCP_TIMEOUT_KEY = "Bifrost_MCP_Timeout";
-        private MCPServer mcpServer;
+        private MCPServerEnhanced mcpServer;
         [SerializeField] private List<string> connectedClients = new List<string>();
 
         [MenuItem("Window/Bifrost AI Assistant")]
@@ -933,7 +934,7 @@ namespace Bifrost.Editor.UI
 
             try
             {
-                mcpServer = new MCPServer(mcpServerPort, mcpRequestTimeout);
+                mcpServer = new MCPServerEnhanced(mcpServerPort);
 
                 // Subscribe to events
                 mcpServer.OnLog += LogToPanel;

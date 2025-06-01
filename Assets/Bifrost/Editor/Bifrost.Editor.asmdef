@@ -1,0 +1,20 @@
+{
+    "name": "Bifrost.Editor",
+    "rootNamespace": "Bifrost.Editor",
+    "references": [
+        "Unity.Plastic.Newtonsoft.Json"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "websocket-sharp.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

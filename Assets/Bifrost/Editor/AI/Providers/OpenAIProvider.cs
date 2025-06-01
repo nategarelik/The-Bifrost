@@ -9,6 +9,10 @@ namespace Bifrost.Editor.AI.Providers
     public class OpenAIProvider : IBifrostLLMProvider
     {
         public string Name => "OpenAI";
+        public string DisplayName => "OpenAI";
+        public bool SupportsStreaming => true;
+        public bool SupportsToolCalling => true;
+        public bool RequiresAPIKey => true;
 
         public async Task<string> CompleteAsync(string prompt, string model, string apiKey, string endpoint, LLMRequestOptions options)
         {

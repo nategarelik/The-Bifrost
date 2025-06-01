@@ -10,6 +10,10 @@ namespace Bifrost.Editor.AI.Providers
     public class AnthropicProvider : IBifrostLLMProvider
     {
         public string Name => "Anthropic";
+        public string DisplayName => "Anthropic (Claude)";
+        public bool SupportsStreaming => true;
+        public bool SupportsToolCalling => true;
+        public bool RequiresAPIKey => true;
 
         public async Task<string> CompleteAsync(string prompt, string model, string apiKey, string endpoint, LLMRequestOptions options)
         {

@@ -65,6 +65,10 @@ namespace Bifrost.Editor.AI.Providers
     public class OpenRouterProvider : IBifrostLLMProvider
     {
         public string Name => "OpenRouter";
+        public string DisplayName => "OpenRouter";
+        public bool SupportsStreaming => true;
+        public bool SupportsToolCalling => true;
+        public bool RequiresAPIKey => true;
 
         public async Task<string> CompleteAsync(string promptText, string modelName, string apiKey, string endpointUrl, LLMRequestOptions options)
         {

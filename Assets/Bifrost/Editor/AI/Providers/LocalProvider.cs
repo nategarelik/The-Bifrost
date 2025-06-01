@@ -6,6 +6,10 @@ namespace Bifrost.Editor.AI.Providers
     public class LocalProvider : IBifrostLLMProvider
     {
         public string Name => "Local";
+        public string DisplayName => "Local (Mock)";
+        public bool SupportsStreaming => false;
+        public bool SupportsToolCalling => false;
+        public bool RequiresAPIKey => false;
 
         public async Task<string> CompleteAsync(string prompt, string model, string apiKey, string endpoint, LLMRequestOptions options)
         {

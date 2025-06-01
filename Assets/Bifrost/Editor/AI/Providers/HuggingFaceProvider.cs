@@ -40,6 +40,10 @@ namespace Bifrost.Editor.AI.Providers
     public class HuggingFaceProvider : IBifrostLLMProvider
     {
         public string Name => "HuggingFace";
+        public string DisplayName => "Hugging Face";
+        public bool SupportsStreaming => false;
+        public bool SupportsToolCalling => false;
+        public bool RequiresAPIKey => true;
 
         public async Task<string> CompleteAsync(string promptText, string modelIdOrEndpoint, string apiKey, string endpointUrlToUse, LLMRequestOptions options)
         {

@@ -10,6 +10,10 @@ namespace Bifrost.Editor.AI.Providers
     public class GeminiProvider : IBifrostLLMProvider
     {
         public string Name => "Gemini";
+        public string DisplayName => "Google Gemini";
+        public bool SupportsStreaming => true;
+        public bool SupportsToolCalling => true;
+        public bool RequiresAPIKey => true;
 
         public async Task<string> CompleteAsync(string prompt, string model, string apiKey, string endpoint, LLMRequestOptions options)
         {

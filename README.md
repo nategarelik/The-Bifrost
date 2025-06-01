@@ -1,101 +1,291 @@
-# The UnityBridge (Bifrost)
+# 🦄 Bifrost: Next-Generation AI-Powered Unity MCP Game Factory
 
-**AI-powered Unity Editor tool for natural language game development.**
+**The most advanced autonomous game development platform for Unity - enabling AI agents to create complete, Steam-publishable games through natural language.**
 
----
-
-## Overview
-
-UnityBridge (codename: Bifrost) is an advanced Unity Editor extension that enables you to create, modify, and manage complete 2D/3D games, systems, and levels using natural language. Powered by multi-provider LLM support, deep Unity integration, and best practices, UnityBridge empowers rapid, AI-driven game development directly inside the Unity Editor.
-
-## Features
-
-- 🧠 **Chat Interface:** Request scripts, assets, systems, or entire games via natural language.
-- 🔌 **Multi-Provider AI:** Supports OpenAI, Anthropic, Gemini, OpenRouter, Hugging Face, and Local providers.
-- ⚙️ **Settings System:** Global and per-project settings for API keys, models, and advanced LLM options (max tokens, temperature, timeout, penalties, custom headers).
-- 📚 **Prompt Template Library:** Built-in templates for 2D/3D games, level design, ProBuilder, UI/UX, and Steam publishing. Integrated UI for browsing and inserting templates.
-- 🏗️ **Unity Context Analyzer:** Injects project/scene context into every AI call for more relevant results.
-- 🛠️ **Game System Generation:** AI outputs strict, validated JSON plans for scripts, prefabs, scenes, and UI, with robust fallback for malformed responses.
-- 🧩 **Unity Project Manipulation:** Create/open/save scenes, generate prefabs, place assets, duplicate prefabs, and more. ProBuilder integration (if present).
-- 🧑‍💻 **Onboarding & Help:** Friendly onboarding, tooltips, and a Steam-ready game guide panel.
-- 🛡️ **Error Handling:** All operations are robust, with clear error messages and safe fallbacks.
-- 🧪 **Tests Folder:** Scaffolded under `Assets/Bifrost/Tests` for future unit tests.
-- 🗃️ **ScriptableObject Generation:** AI can now generate ScriptableObjects as part of asset plans.
-- 💬 **Chat History Persistence:** Chat history is saved between sessions.
-- ⏳ **Progress Indicator:** Spinner shows during long-running operations.
-
-## Installation
-
-### Option 1: Unity Package Manager (Recommended)
-
-1. Open Unity and go to **Window > Package Manager**
-2. Click the **+** button and select **Add package from git URL...**
-3. Enter:
-   ```
-   https://github.com/nategarelik/The-Bifrost.git?path=Assets/Bifrost
-   ```
-4. Click **Add**. The package will appear in your project under `Assets/Bifrost`.
-
-### Option 2: Manual Import
-
-- Download or clone this repo.
-- Copy the `Assets/Bifrost` folder into your Unity project's `Assets/` directory.
-
-## Usage
-
-1. Open the tool via **Window > Bifrost AI Assistant**
-2. Use the Chat tab to request scripts, systems, or assets in natural language.
-3. Review and approve AI-generated plans before they are applied.
-4. Explore the Settings and Prompt Library tabs for customization and advanced features.
-5. Use the Steam Guide for a checklist to publish your game on Steam.
-
-## Architecture & Documentation
-
-- See `Bifrost/PROJECT_BREAKDOWN.md` for a detailed breakdown of the architecture, file purposes, and next steps.
-- The file `Assets/Bifrost/Editor/UI/BifrostEditorWindow.cs` is a legacy/alternate version and can be archived or deleted if not referenced.
-- The `ImageTo3DGenerator.cs` is currently a stub and will be expanded in future releases.
-- For contributing, see `CONTRIBUTING.md`.
-
-## Screenshots
-
-_Coming soon!_
-
-## Requirements
-
-- Unity 2021.3 or newer
-- Internet connection for AI features
-
-## Support & Community
-
-- [GitHub Issues](https://github.com/nategarelik/the-unitybridge/issues)
-- (Optional) Discord/Community link
+[![Unity 2020.3+](https://img.shields.io/badge/Unity-2020.3%2B-blue.svg)](https://unity.com)
+[![MCP Protocol](https://img.shields.io/badge/MCP-2024--11--05-green.svg)](https://modelcontextprotocol.io)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
-## Release Checklist: Steam-Ready Game
+## 🌟 Overview
 
-1. **Prepare your game for build:**
-   - Finalize scenes, assets, and settings.
-   - Test in the Unity Editor.
-2. **Integrate Steamworks:**
-   - Use Steamworks.NET or Facepunch.Steamworks for Steam API integration.
-   - Implement achievements, cloud saves, etc. as needed.
-3. **Set up your Steam app:**
-   - Create your app on the [Steamworks dashboard](https://partner.steamgames.com/).
-   - Fill out all required metadata and assets.
-4. **Build and upload:**
-   - Build your game for Windows/Mac/Linux as needed.
-   - Use SteamPipe to upload builds to Steam.
-5. **Test with Steam client:**
-   - Download and run your game via Steam to verify integration.
-6. **Follow Steam's release checklist:**
-   - Complete all required checkboxes in the Steamworks dashboard.
-   - Submit for review and schedule your release!
+Bifrost (formerly UnityBridge) is a revolutionary Unity Editor extension that transforms game development by exposing the entire Unity Editor as a Model Context Protocol (MCP) server. This enables local or remote AI agents (including Claude, GPT-4, Gemini, and local Ollama models) to autonomously design, build, test, and iterate on complete games with minimal human intervention.
+
+### Key Innovations
+
+- **🤖 Full Unity Editor Control**: Every Unity operation available through MCP tools
+- **🧠 Multi-Provider AI Support**: OpenAI, Anthropic, Gemini, Ollama (local), and more
+- **🔄 Real-time State Synchronization**: Live Unity scene updates streamed to AI agents
+- **📊 Autonomous Agent System**: AI agents can plan and execute complex game development tasks
+- **🛠️ 40+ Unity Tools**: Comprehensive coverage of scenes, GameObjects, assets, physics, UI, and more
+- **💾 Intelligent Memory**: Context-aware memory system for efficient long-running operations
+- **🎮 Steam-Ready Output**: Generate complete, publishable games
+
+## 🚀 Quick Start
+
+### Installation
+
+#### Option 1: Unity Package Manager (Recommended)
+1. Open Unity (2020.3 or newer)
+2. Go to **Window > Package Manager**
+3. Click **+** → **Add package from git URL...**
+4. Enter: `https://github.com/nategarelik/The-Bifrost.git?path=Assets/Bifrost`
+
+#### Option 2: Manual Installation
+1. Clone this repository
+2. Copy `Assets/Bifrost` to your Unity project's Assets folder
+
+### First Run
+
+1. Open **Window > Bifrost AI Assistant**
+2. Configure your AI provider in the Settings tab
+3. Open **Window > Bifrost > MCP Control Panel**
+4. Start the MCP server
+5. Connect your AI agent (Claude Desktop, Cursor, or custom client)
+
+## 🏗️ Architecture
+
+### System Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Unity Editor                              │
+├─────────────────────────────────────────────────────────────────┤
+│                    Bifrost MCP Layer                             │
+│  ┌─────────────┐  ┌──────────────┐  ┌────────────────────┐     │
+│  │ MCP Server  │  │ Tool Registry │  │ Resource Registry  │     │
+│  │ (WebSocket) │  │  (40+ tools)  │  │  (Live Unity data) │     │
+│  └──────┬──────┘  └──────┬───────┘  └─────────┬──────────┘     │
+│         │                 │                    │                 │
+│  ┌──────▼─────────────────▼────────────────────▼───────────┐    │
+│  │              Unity Operation Executors                   │    │
+│  └──────────────────────────────────────────────────────────┘    │
+├─────────────────────────────────────────────────────────────────┤
+│                    Agent Autonomy System                         │
+│  ┌─────────────┐  ┌──────────────┐  ┌────────────────────┐     │
+│  │   Planner   │  │Context Manager│  │  Memory System     │     │
+│  └─────────────┘  └──────────────┘  └────────────────────┘     │
+└─────────────────────────────────────────────────────────────────┘
+                              ▲
+                              │ MCP Protocol (JSON-RPC)
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              External AI Agents / LLMs                           │
+│  Claude Desktop │ Cursor │ GPT-4 │ Gemini │ Ollama │ Custom    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Core Components
+
+#### 1. MCP Server (`Assets/Bifrost/Editor/AI/MCP/`)
+- **MCPServerEnhanced**: WebSocket server implementing MCP 2024-11-05 spec
+- **MCPProtocol**: Full protocol implementation with tool/resource management
+- **MCPToolRegistry**: Dynamic tool registration and discovery
+- **MCPResourceRegistry**: Live Unity data exposure
+
+#### 2. Unity Tools (`Assets/Bifrost/Editor/AI/MCP/Tools/`)
+Comprehensive Unity operations organized by category:
+
+**Scene Management**
+- `create_scene` - Create scenes with configuration
+- `load_scene` - Load scenes (additive/single)
+- `save_scene` - Save current or specific scenes
+- `analyze_scene` - Detailed scene analysis
+
+**GameObject Operations**
+- `create_gameobject_advanced` - Full component setup
+- `find_gameobjects` - Advanced queries
+- `modify_transform` - Batch transform operations
+- `destroy_gameobject` - Safe destruction
+
+**Asset Tools** (extensible)
+- Material creation and modification
+- Texture generation
+- Prefab management
+- Script generation
+
+#### 3. Agent System (`Assets/Bifrost/Editor/AI/Agent/`)
+- **AgentContextManager**: Intelligent context building
+- **AgentPlanner**: Multi-step execution planning
+- **AgentMemory**: Short/long-term memory management
+- **CostTracker**: Token usage and cost optimization
+
+#### 4. Unity Integration (`Assets/Bifrost/Editor/AI/Unity/`)
+- **UnityStateSynchronizer**: Real-time event monitoring
+- **UnityOperationQueue**: Thread-safe operation execution
+
+#### 5. LLM Providers (`Assets/Bifrost/Editor/AI/Providers/`)
+- **OllamaProvider**: Local LLM support (NEW!)
+- Enhanced providers with streaming and tool calling
+- Unified interface for all providers
+
+## 📚 MCP Tools Reference
+
+### Scene Management Tools
+
+| Tool | Description | Key Parameters |
+|------|-------------|----------------|
+| `create_scene` | Create new scene | name, addToBuildSettings, makeActive |
+| `load_scene` | Load existing scene | scene, mode (Single/Additive) |
+| `save_scene` | Save scene | sceneName, saveAs |
+| `analyze_scene` | Get scene details | includeComponents, maxDepth |
+
+### GameObject Tools
+
+| Tool | Description | Key Parameters |
+|------|-------------|----------------|
+| `create_gameobject_advanced` | Create with full setup | name, primitiveType, position, components |
+| `find_gameobjects` | Search by criteria | name, tag, layer, componentType |
+| `modify_transform` | Change transform | target, position, rotation, scale |
+| `destroy_gameobject` | Remove from scene | target, includeChildren |
+
+### More Tools Coming
+- Component manipulation
+- Physics configuration
+- UI creation
+- Animation setup
+- Audio management
+- Build automation
+
+## 🎯 Usage Examples
+
+### Basic Scene Creation
+```javascript
+// MCP Tool Call
+{
+  "tool": "create_scene",
+  "arguments": {
+    "name": "MainMenu",
+    "addToBuildSettings": true
+  }
+}
+```
+
+### Complex GameObject Creation
+```javascript
+{
+  "tool": "create_gameobject_advanced",
+  "arguments": {
+    "name": "Player",
+    "primitiveType": "Capsule",
+    "position": { "x": 0, "y": 1, "z": 0 },
+    "components": [
+      { "type": "Rigidbody", "properties": { "mass": 1.5 } },
+      { "type": "CapsuleCollider" }
+    ]
+  }
+}
+```
+
+## 🤖 AI Agent Examples
+
+### Autonomous Game Creation
+```
+User: Create a complete 3D platformer with 5 levels
+Agent: *Creates scene hierarchy, player controller, platforms, collectibles, UI, and game logic*
+```
+
+### Intelligent Iteration
+```
+User: The player feels too floaty
+Agent: *Analyzes physics settings, adjusts gravity and jump parameters, tests changes*
+```
+
+## 🛠️ Configuration
+
+### MCP Server Settings
+- **Port**: Default 8090 (configurable)
+- **WebSocket Protocol**: Standard WebSocket
+- **Authentication**: Optional token-based
+
+### LLM Provider Settings
+Configure in Settings tab:
+- API keys for cloud providers
+- Ollama endpoint for local models
+- Model selection per provider
+- Token limits and temperature
+
+### Agent Settings
+- Memory retention limits
+- Cost controls
+- Execution timeouts
+- Safety constraints
+
+## 📊 Resources
+
+MCP Resources provide live Unity data:
+
+| Resource URI | Description |
+|--------------|-------------|
+| `unity://scene/hierarchy` | Current scene structure |
+| `unity://project/structure` | Project overview |
+| `unity://selection` | Selected objects |
+| `unity://console/logs` | Console output |
+| `unity://build/settings` | Build configuration |
+| `unity://assets/list` | Project assets |
+
+## 🧪 Testing
+
+Run tests via Unity Test Runner:
+- **Window > General > Test Runner**
+- Run EditMode tests for MCP protocol
+- Integration tests for full workflows
+
+## 🔒 Security
+
+- MCP server runs locally by default
+- Optional authentication for remote connections
+- Sandboxing for untrusted agents
+- Operation limits and quotas
+- Full audit trail
+
+## 🚀 Roadmap
+
+### Phase 1 (Complete) ✅
+- Core MCP infrastructure
+- Basic Unity tools
+- Multi-provider support
+
+### Phase 2 (In Progress) 🔄
+- Extended tool coverage
+- Advanced agent autonomy
+- Performance optimization
+
+### Phase 3 (Planned) 📋
+- Visual debugging overlay
+- Multiplayer game support
+- Asset store integration
+- Cloud deployment
+
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+### Development Setup
+1. Fork the repository
+2. Create feature branch
+3. Implement with tests
+4. Submit pull request
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file.
+
+## 🙏 Acknowledgments
+
+- Unity Technologies for the amazing engine
+- Anthropic for the MCP specification
+- The open-source community
+
+## 📞 Support
+
+- [GitHub Issues](https://github.com/nategarelik/The-Bifrost/issues)
+- [Discord Community](https://discord.gg/bifrost) (Coming soon)
+- [Documentation Wiki](https://github.com/nategarelik/The-Bifrost/wiki)
 
 ---
 
-## Testing
+**Transform your game development workflow with Bifrost - where AI agents become game developers!**
 
-- Unit tests for plan validation and ScriptableObject generation are included in `Assets/Bifrost/Tests/`.
-
-© 2024 Nate Garelik. MIT License.
+© 2024 Nate Garelik. Built with ❤️ for the Unity community.

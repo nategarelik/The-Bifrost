@@ -46,3 +46,37 @@ crashlytics-build.properties
 .cursor/ 
 scrap.md
 .vscode/settings.json
+
+# Bifrost MCP Server
+mcp-server-logs/
+mcp-server-cache/
+*.mcp.log
+mcp-connections.json
+
+# Bifrost Agent Memory
+agent-memory/
+agent-plans/
+*.agent.json
+
+# Ollama models (if stored locally)
+ollama-models/
+*.gguf
+*.ggml
+
+# API Keys and secrets (should never be committed)
+api-keys.json
+secrets.json
+*.key
+*.secret
+
+# Generated Unity assets from AI
+Assets/Bifrost/Runtime/Generated/
+!Assets/Bifrost/Runtime/Generated/.gitkeep
+
+# Test coverage reports
+coverage/
+*.coverage
+TestResults/
+
+# Unity Package Manager cache
+PackageCache/

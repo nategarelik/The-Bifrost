@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEditor;
-using Newtonsoft.Json.Linq;
+using Unity.Plastic.Newtonsoft.Json.Linq;
 using Bifrost.Editor.AI.MCP;
 
 namespace Bifrost.Editor.AI.MCP.Tools.GameObject

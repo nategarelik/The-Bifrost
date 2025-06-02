@@ -4,7 +4,7 @@ using UnityEngine;
 using System.Text;
 using Bifrost.Editor; // For LLMRequestOptions
 using System.Collections.Generic; // For List/Dictionary
-using Newtonsoft.Json; // USING NEWTONSOFT
+using Unity.Plastic.Newtonsoft.Json; // USING NEWTONSOFT
 
 namespace Bifrost.Editor.AI.Providers
 {

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEditor;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Unity.Plastic.Newtonsoft.Json;
+using Unity.Plastic.Newtonsoft.Json.Linq;
 #if UNITY_EDITOR
 using WebSocketSharp;
 using WebSocketSharp.Server;

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.SceneManagement;
-using Newtonsoft.Json.Linq;
+using Unity.Plastic.Newtonsoft.Json.Linq;
 
 namespace Bifrost.Editor.AI.MCP.Resources
 {

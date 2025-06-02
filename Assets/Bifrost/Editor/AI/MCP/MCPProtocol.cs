@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
+using Unity.Plastic.Newtonsoft.Json.Linq;
 
 namespace Bifrost.Editor.AI.MCP
 {

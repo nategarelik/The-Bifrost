@@ -4,8 +4,8 @@ using UnityEngine;
 using System.Text;
 using Bifrost.Editor;
 using System.Collections.Generic;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Unity.Plastic.Newtonsoft.Json;
+using Unity.Plastic.Newtonsoft.Json.Linq;
 
 namespace Bifrost.Editor.AI.Providers
 {

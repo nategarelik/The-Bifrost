@@ -14,7 +14,9 @@ namespace Bifrost.Editor.AI.MCP
 {
     public class MCPServer
     {
+#if UNITY_EDITOR
         private WebSocketServer webSocketServer;
+#endif
         private bool isRunning = false;
         private int port;
         
@@ -104,6 +106,7 @@ namespace Bifrost.Editor.AI.MCP
         }
     }
 
+#if UNITY_EDITOR
     public class MCPBehavior : WebSocketBehavior
     {
         private IMCPProtocol protocol;
@@ -274,4 +277,5 @@ namespace Bifrost.Editor.AI.MCP
             };
         }
     }
+#endif
 }

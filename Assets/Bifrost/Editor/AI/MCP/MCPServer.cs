@@ -46,6 +46,7 @@ namespace Bifrost.Editor.AI.MCP
         {
             if (isRunning) return;
 
+#if UNITY_EDITOR
             try
             {
                 webSocketServer = new WebSocketServer(port);
@@ -66,17 +67,24 @@ namespace Bifrost.Editor.AI.MCP
                 OnError?.Invoke($"Failed to start MCP server: {ex.Message}");
                 isRunning = false;
             }
+#else
+            OnError?.Invoke("WebSocket support not available. Please ensure websocket-sharp.dll is in Assets/Plugins/");
+#endif
         }
 
         public void Stop()
         {
             if (!isRunning) return;
 
+#if UNITY_EDITOR
             try
             {
                 webSocketServer?.Stop();
                 webSocketServer = null;
                 isRunning = false;
+#else
+            isRunning = false;
+#endif
                 OnLog?.Invoke("Enhanced MCP Server stopped");
             }
             catch (Exception ex)

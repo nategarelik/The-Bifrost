@@ -289,3 +289,4 @@ MIT License - see [LICENSE](LICENSE) file.
 **Transform your game development workflow with Bifrost - where AI agents become game developers!**
 
 © 2024 Nate Garelik. Built with ❤️ for the Unity community.
+## 🔧 Troubleshooting

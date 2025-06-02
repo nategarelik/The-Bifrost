@@ -82,15 +82,16 @@ namespace Bifrost.Editor.AI.MCP
                 webSocketServer?.Stop();
                 webSocketServer = null;
                 isRunning = false;
-#else
-            isRunning = false;
-#endif
                 OnLog?.Invoke("Enhanced MCP Server stopped");
             }
             catch (Exception ex)
             {
                 OnError?.Invoke($"Error stopping MCP server: {ex.Message}");
             }
+#else
+            isRunning = false;
+            OnLog?.Invoke("Enhanced MCP Server stopped (no WebSocket)");
+#endif
         }
 
         internal void NotifyClientConnected(string clientId)

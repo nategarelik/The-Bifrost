@@ -12,7 +12,7 @@ namespace Bifrost.Editor.UI
 {
     public class BifrostMCPWindow : EditorWindow
     {
-        private SimpleMCPServer mcpServer;
+        private MCPServer mcpServer;
         private UnityStateSynchronizer stateSynchronizer;
         private BifrostSettings settings;
         
@@ -339,7 +339,7 @@ namespace Bifrost.Editor.UI
         {
             EditorPrefs.SetInt("BifrostMCP_ServerPort", serverPort);
             
-            mcpServer = new SimpleMCPServer(serverPort);
+            mcpServer = new MCPServer(serverPort);
             mcpServer.OnClientConnected += OnClientConnected;
             mcpServer.OnClientDisconnected += OnClientDisconnected;
             mcpServer.OnLog += OnServerLog;

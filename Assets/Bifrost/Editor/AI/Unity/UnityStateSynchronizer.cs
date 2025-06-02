@@ -10,11 +10,11 @@ namespace Bifrost.Editor.AI.Unity
 {
     public class UnityStateSynchronizer
     {
-        private readonly MCP.MCPServerEnhanced server;
+        private readonly MCP.MCPServer server;
         private readonly List<StateChangeSubscriber> subscribers = new List<StateChangeSubscriber>();
         private bool isInitialized = false;
 
-        public UnityStateSynchronizer(MCP.MCPServerEnhanced server)
+        public UnityStateSynchronizer(MCP.MCPServer server)
         {
             this.server = server;
         }

@@ -17,6 +17,7 @@ namespace Bifrost.Editor.AI.Providers
         private static readonly HttpClient httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
         private const string DEFAULT_ENDPOINT = "http://localhost:11434";
 
+        public string Name => "Ollama";
         public string DisplayName => "Ollama (Local)";
         public bool RequiresAPIKey => false;
         public bool SupportsStreaming => true;

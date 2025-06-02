@@ -93,3 +93,4 @@ mcp-server-state.json
 # Editor preferences and state
 EditorPrefs.asset
 Bifrost_*.pref
+.claude/settings.local.json

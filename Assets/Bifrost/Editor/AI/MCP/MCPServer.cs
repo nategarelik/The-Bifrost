@@ -5,12 +5,14 @@ using UnityEngine;
 using UnityEditor;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+#if UNITY_EDITOR
 using WebSocketSharp;
 using WebSocketSharp.Server;
+#endif
 
 namespace Bifrost.Editor.AI.MCP
 {
-    public class MCPServerEnhanced
+    public class MCPServer
     {
         private WebSocketServer webSocketServer;
         private bool isRunning = false;
@@ -30,7 +32,7 @@ namespace Bifrost.Editor.AI.MCP
         public MCPToolRegistry ToolRegistry => toolRegistry;
         public MCPResourceRegistry ResourceRegistry => resourceRegistry;
 
-        public MCPServerEnhanced(int port = 8090)
+        public MCPServer(int port = 8090)
         {
             this.port = port;
             this.toolRegistry = new MCPToolRegistry();
@@ -45,7 +47,7 @@ namespace Bifrost.Editor.AI.MCP
             try
             {
                 webSocketServer = new WebSocketServer(port);
-                webSocketServer.AddWebSocketService<MCPEnhancedBehavior>("/", behavior =>
+                webSocketServer.AddWebSocketService<MCPBehavior>("/", behavior =>
                 {
                     behavior.Initialize(protocol, this);
                 });
@@ -102,13 +104,13 @@ namespace Bifrost.Editor.AI.MCP
         }
     }
 
-    public class MCPEnhancedBehavior : WebSocketBehavior
+    public class MCPBehavior : WebSocketBehavior
     {
         private IMCPProtocol protocol;
-        private MCPServerEnhanced server;
+        private MCPServer server;
         private Dictionary<string, Func<JObject, Task<object>>> methodHandlers;
 
-        public void Initialize(IMCPProtocol protocol, MCPServerEnhanced server)
+        public void Initialize(IMCPProtocol protocol, MCPServer server)
         {
             this.protocol = protocol;
             this.server = server;

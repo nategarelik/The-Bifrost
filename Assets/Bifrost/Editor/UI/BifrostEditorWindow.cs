@@ -46,7 +46,7 @@ namespace Bifrost.Editor.UI
         [SerializeField] private int mcpRequestTimeout = 10;
         private const string MCP_PORT_KEY = "Bifrost_MCP_Port";
         private const string MCP_TIMEOUT_KEY = "Bifrost_MCP_Timeout";
-        private MCPServerEnhanced mcpServer;
+        private MCPServer mcpServer;
         [SerializeField] private List<string> connectedClients = new List<string>();
 
         [MenuItem("Window/Bifrost AI Assistant")]
@@ -934,7 +934,7 @@ namespace Bifrost.Editor.UI
 
             try
             {
-                mcpServer = new MCPServerEnhanced(mcpServerPort);
+                mcpServer = new MCPServer(mcpServerPort);
 
                 // Subscribe to events
                 mcpServer.OnLog += LogToPanel;

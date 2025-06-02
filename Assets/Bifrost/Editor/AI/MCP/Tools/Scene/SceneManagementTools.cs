@@ -330,9 +330,9 @@ namespace Bifrost.Editor.AI.MCP.Tools.Scene
                     {
                         ["totalGameObjects"] = CountGameObjects(rootObjects),
                         ["totalComponents"] = CountComponents(rootObjects),
-                        ["cameras"] = GameObject.FindObjectsOfType<Camera>().Length,
-                        ["lights"] = GameObject.FindObjectsOfType<Light>().Length,
-                        ["audioSources"] = GameObject.FindObjectsOfType<AudioSource>().Length
+                        ["cameras"] = UnityEngine.GameObject.FindObjectsOfType<Camera>().Length,
+                        ["lights"] = UnityEngine.GameObject.FindObjectsOfType<Light>().Length,
+                        ["audioSources"] = UnityEngine.GameObject.FindObjectsOfType<AudioSource>().Length
                     };
                     
                     analysis["statistics"] = stats;
@@ -346,7 +346,7 @@ namespace Bifrost.Editor.AI.MCP.Tools.Scene
             });
         }
 
-        private JObject AnalyzeGameObject(GameObject obj, bool includeComponents, int currentDepth, int maxDepth)
+        private JObject AnalyzeGameObject(UnityEngine.GameObject obj, bool includeComponents, int currentDepth, int maxDepth)
         {
             var result = new JObject
             {
@@ -393,7 +393,7 @@ namespace Bifrost.Editor.AI.MCP.Tools.Scene
             return result;
         }
 
-        private int CountGameObjects(GameObject[] rootObjects)
+        private int CountGameObjects(UnityEngine.GameObject[] rootObjects)
         {
             int count = rootObjects.Length;
             foreach (var obj in rootObjects)
@@ -413,7 +413,7 @@ namespace Bifrost.Editor.AI.MCP.Tools.Scene
             return count;
         }
 
-        private int CountComponents(GameObject[] rootObjects)
+        private int CountComponents(UnityEngine.GameObject[] rootObjects)
         {
             int count = 0;
             foreach (var obj in rootObjects)

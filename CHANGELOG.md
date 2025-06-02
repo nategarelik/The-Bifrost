@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Full Model Context Protocol (MCP) Implementation**
   - WebSocket-based MCP server (port 8090) with JSON-RPC 2.0
+  - Consolidated to single MCPServer class (removed redundant implementations)
   - MCP 2024-11-05 specification compliance
   - Dynamic tool and resource registration with reflection
   - Real-time Unity state synchronization

@@ -27,7 +27,7 @@ This guide explains how to use Bifrost's Model Context Protocol (MCP) server to 
 ```csharp
 // The server starts automatically when you click "Start Server" in the UI
 // Or programmatically:
-var mcpServer = new MCPServerEnhanced(8090);
+var mcpServer = new MCPServer(8090);
 mcpServer.Start();
 ```
 

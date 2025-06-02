@@ -1,0 +1,22 @@
+MCP Server Consolidation (2024-01-06)
+=====================================
+
+This directory originally contained three MCP server implementations:
+1. MCPServer.cs - Basic implementation
+2. MCPServerEnhanced.cs - Enhanced version with better features
+3. SimpleMCPServer.cs - TCP-based fallback
+
+We consolidated to a single MCPServer.cs (formerly MCPServerEnhanced) because:
+- WebSocket is the standard transport for MCP protocol
+- Multiple implementations were confusing and redundant
+- The enhanced version had all necessary features
+- websocket-sharp.dll is included for proper WebSocket support
+
+The consolidated MCPServer provides:
+- Full MCP 2024-11-05 specification compliance
+- WebSocket transport via websocket-sharp
+- Dynamic tool/resource registration
+- Event-based client management
+- Thread-safe operation execution
+
+All references have been updated throughout the codebase.

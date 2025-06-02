@@ -1,6 +1,6 @@
 {
   "name": "com.nategarelik.bifrost",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "displayName": "The Bifrost AI Assistant",
   "description": "An AI-powered Unity Editor tool for natural language game development.",
   "unity": "2020.3",
